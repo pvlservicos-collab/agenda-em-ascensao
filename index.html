@@ -624,15 +624,15 @@ const vazFmt=v=>v===0?'Quase nada':durNice(v);
 
 const W1=[
   function leadForm(sh){
-    sh.innerHTML='<div class="step">COLOQUE SEUS DADOS</div><h3>Antes de começar</h3>'+
-    '<div class="lead">Pra gente poder te ajudar depois que você vir a sua semana, precisamos só do seu nome e WhatsApp.</div>'+
+    sh.innerHTML='<h3>Vamos desenhar a sua semana</h3>'+
+    '<div class="lead">Clareza é o nome do jogo. Quando você enxerga a sua semana inteira, e quantas horas vão pra cada tipo de atividade, fica muito mais fácil fazer um uso mais intencional e eficiente do seu tempo a partir de hoje.<br><br>'+
+    'Com algumas perguntas rápidas, a gente monta a <b style="color:var(--ink)">sua agenda</b>. Depois você ajusta cada bloco à vontade: arrasta, edita, cria. Fica do seu jeito.</div>'+
+    '<div class="step" style="margin-top:18px">COLOQUE SEUS DADOS</div>'+
     '<div class="field"><label>Nome</label><input type="text" id="qNome" placeholder="Seu nome" value="'+esc(S.lead.nome)+'"></div>'+
     '<div class="field"><label>WhatsApp</label><input type="tel" inputmode="numeric" id="qWhats" maxlength="16" placeholder="(11) 99999-0000" value="'+esc(S.lead.whatsapp)+'"></div>'+
-    '<div class="field"><label>E-mail <span style="color:var(--muted)">(opcional)</span></label><input type="text" id="qEmail" placeholder="voce@email.com" value="'+esc(S.lead.email||'')+'"></div>'+
     '<div class="lead" id="leadErr" style="color:#E69A92;display:none;margin-bottom:0"></div>';
-    const nomeI=sh.querySelector('#qNome'),whatsI=sh.querySelector('#qWhats'),emailI=sh.querySelector('#qEmail');
+    const nomeI=sh.querySelector('#qNome'),whatsI=sh.querySelector('#qWhats');
     nomeI.oninput=()=>S.lead.nome=nomeI.value;
-    emailI.oninput=()=>S.lead.email=emailI.value;
     const maskWhats=()=>{let v=whatsI.value.replace(/\D/g,'').slice(0,11);
       if(v.length>10)v=v.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3');
       else if(v.length>6)v=v.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3');
@@ -640,21 +640,15 @@ const W1=[
       else if(v.length>0)v=v.replace(/(\d{0,2})/,'($1');
       whatsI.value=v;S.lead.whatsapp=v;};
     whatsI.oninput=maskWhats;
-    nav(sh,null,'Continuar',()=>{
+    nav(sh,null,'Começar',()=>{
       const nome=nomeI.value.trim();
       const digits=whatsI.value.replace(/\D/g,'');
       const err=sh.querySelector('#leadErr');
       if(!nome||digits.length<10){err.textContent='Preencha nome e um WhatsApp válido.';err.style.display='block';return false;}
-      S.lead.nome=nome;S.lead.whatsapp=digits;S.lead.email=emailI.value.trim();
+      S.lead.nome=nome;S.lead.whatsapp=digits;
       submitLead();save();
       return true;
     });
-  },
-  function intro(sh){
-    sh.innerHTML='<div class="step">COMO FUNCIONA</div><h3>Vamos desenhar a sua semana</h3>'+
-    '<div class="lead">Clareza é o nome do jogo. Quando você enxerga a sua semana inteira, e quantas horas vão pra cada tipo de atividade, fica muito mais fácil fazer um uso mais intencional e eficiente do seu tempo a partir de hoje.<br><br>'+
-    'Com algumas perguntas rápidas, a gente monta a <b style="color:var(--ink)">sua agenda</b>. Depois você ajusta cada bloco à vontade: arrasta, edita, cria. Fica do seu jeito.</div>';
-    nav(sh,null,'Começar');
   },
   function sono(sh){
     sh.innerHTML='<div class="step">1 DE 7</div><h3>Sono</h3><div class="lead">A base de tudo. Entra em todos os dias.</div>'+
