@@ -197,6 +197,7 @@
       <span class="hint">Deslize pro lado pra ver os outros dias · toque pra editar · segure e arraste pra mover · salva sozinho</span>
       <button class="reset" id="reset">Recomeçar do zero</button>
     </div>
+    <div style="margin-top:6px"><a href="/exclusao-dados.html" style="font-size:11px;color:var(--muted)">Solicitar exclusão dos meus dados (LGPD)</a></div>
   </div>
 </div>
 
@@ -274,6 +275,7 @@ const CATS={
 const EDIT_CATS=['f1','f2','f3','desvio','vaz'];
 
 let S={ phase:'w1', step:0,
+  lead:{nome:'',whatsapp:'',email:''},
   a1:{bed:'23:00',wake:'07:00',ws:'09:00',we:'18:00',wdays:[0,1,2,3,4],commute:15,meetAM:60,meetPM:60,meetEve:0,
       lunchT:'12:00',lunchD:60,bfT:'07:00',bfD:30,dinT:'21:00',dinD:60,train:true,trainDays:[0,2,4],trainT:'18:30',trainD:60,trainCom:15,
       ppl:true,pplWkDays:[0,1,2,3,4],pplWkT:'20:00',pplWkD:180,pplWeDays:[5,6],pplWeT:'11:00',pplWeD:420,vazAM:90,vazAMp:'começo',vazPM:90,vazPMp:'começo'},
@@ -308,6 +310,22 @@ async function load(){
   try{if(window.storage){const r=await window.storage.get('maa:v2',false);if(r&&r.value){S=Object.assign(S,JSON.parse(r.value));return true;}}}catch(e){}
   try{const v=localStorage.getItem('maa:v2');if(v){S=Object.assign(S,JSON.parse(v));return true;}}catch(e){}
   return false;}
+
+/* ---------- tracking / lead ---------- */
+const SESSION_ID=(function(){
+  try{let id=localStorage.getItem('maa:sid');
+    if(!id){id=(crypto.randomUUID?crypto.randomUUID():(Date.now().toString(36)+Math.random().toString(36).slice(2)));
+      localStorage.setItem('maa:sid',id);}
+    return id;}catch(e){return String(Date.now());}
+})();
+function track(evt,extra){
+  try{fetch('/api/track',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(Object.assign({event:evt,session_id:SESSION_ID,whatsapp:(S&&S.lead&&S.lead.whatsapp)||null},extra||{}))
+  }).catch(()=>{});}catch(e){}}
+function submitLead(){
+  try{fetch('/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({nome:S.lead.nome,whatsapp:S.lead.whatsapp,email:S.lead.email||null,session_id:SESSION_ID})
+  }).catch(()=>{});}catch(e){}}
 
 function computeEnd(blocks){
   let latest=DAY_END;
@@ -605,6 +623,33 @@ const vazOpts=[0,30,60,90,120,150,180];
 const vazFmt=v=>v===0?'Quase nada':durNice(v);
 
 const W1=[
+  function leadForm(sh){
+    sh.innerHTML='<div class="step">COLOQUE SEUS DADOS</div><h3>Antes de começar</h3>'+
+    '<div class="lead">Pra gente poder te ajudar depois que você vir a sua semana, precisamos só do seu nome e WhatsApp.</div>'+
+    '<div class="field"><label>Nome</label><input type="text" id="qNome" placeholder="Seu nome" value="'+esc(S.lead.nome)+'"></div>'+
+    '<div class="field"><label>WhatsApp</label><input type="tel" inputmode="numeric" id="qWhats" maxlength="16" placeholder="(11) 99999-0000" value="'+esc(S.lead.whatsapp)+'"></div>'+
+    '<div class="field"><label>E-mail <span style="color:var(--muted)">(opcional)</span></label><input type="text" id="qEmail" placeholder="voce@email.com" value="'+esc(S.lead.email||'')+'"></div>'+
+    '<div class="lead" id="leadErr" style="color:#E69A92;display:none;margin-bottom:0"></div>';
+    const nomeI=sh.querySelector('#qNome'),whatsI=sh.querySelector('#qWhats'),emailI=sh.querySelector('#qEmail');
+    nomeI.oninput=()=>S.lead.nome=nomeI.value;
+    emailI.oninput=()=>S.lead.email=emailI.value;
+    const maskWhats=()=>{let v=whatsI.value.replace(/\D/g,'').slice(0,11);
+      if(v.length>10)v=v.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3');
+      else if(v.length>6)v=v.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3');
+      else if(v.length>2)v=v.replace(/(\d{2})(\d{0,5})/,'($1) $2');
+      else if(v.length>0)v=v.replace(/(\d{0,2})/,'($1');
+      whatsI.value=v;S.lead.whatsapp=v;};
+    whatsI.oninput=maskWhats;
+    nav(sh,null,'Continuar',()=>{
+      const nome=nomeI.value.trim();
+      const digits=whatsI.value.replace(/\D/g,'');
+      const err=sh.querySelector('#leadErr');
+      if(!nome||digits.length<10){err.textContent='Preencha nome e um WhatsApp válido.';err.style.display='block';return false;}
+      S.lead.nome=nome;S.lead.whatsapp=digits;S.lead.email=emailI.value.trim();
+      submitLead();save();
+      return true;
+    });
+  },
   function intro(sh){
     sh.innerHTML='<div class="step">COMO FUNCIONA</div><h3>Vamos desenhar a sua semana</h3>'+
     '<div class="lead">Clareza é o nome do jogo. Quando você enxerga a sua semana inteira, e quantas horas vão pra cada tipo de atividade, fica muito mais fácil fazer um uso mais intencional e eficiente do seu tempo a partir de hoje.<br><br>'+
@@ -726,14 +771,15 @@ const W1=[
   }
 ];
 
-function nav(sh,backLabel,nextLabel){
+function nav(sh,backLabel,nextLabel,guard){
   const n=document.createElement('div');n.className='nav';
   if(backLabel){const b=document.createElement('button');b.className='back';b.textContent=backLabel;
     b.onclick=()=>{S.step=Math.max(0,S.step-1);renderWizard();};n.appendChild(b);}
   const nx=document.createElement('button');nx.className='next';nx.textContent=nextLabel;
   nx.onclick=()=>{
+    if(guard&&!guard())return;
     if(S.step<W1.length-1){S.step++;renderWizard();save();}
-    else{S.real=buildReal(S.a1);S.uid=UID;S.phase='done';closeWizard();refresh();save();}
+    else{S.real=buildReal(S.a1);S.uid=UID;S.phase='done';closeWizard();refresh();save();track('wizard_complete');}
   };
   n.appendChild(nx);sh.appendChild(n);
 }
@@ -771,9 +817,9 @@ function go(url,fallbackMsg){if(url)window.open(url,'_blank');else toast(fallbac
 $('#ctaOpen').onclick=openCta;
 $('#ctaClose').onclick=closeCta;
 ctaScrim.addEventListener('pointerdown',e=>{if(e.target===ctaScrim)closeCta();});
-$('#ctaDiag').onclick=()=>go(CONFIG.DIAG_URL,'Configure o link em CONFIG.DIAG_URL no topo do código.');
-$('#ctaForm').onclick=()=>go(CONFIG.FORM_URL,'Configure o link em CONFIG.FORM_URL no topo do código.');
-$('#ctaInsta').onclick=()=>go(CONFIG.INSTA_URL,'Configure o link em CONFIG.INSTA_URL no topo do código.');
+$('#ctaDiag').onclick=()=>{track('cta_diag');go(CONFIG.DIAG_URL,'Configure o link em CONFIG.DIAG_URL no topo do código.');};
+$('#ctaForm').onclick=()=>{track('cta_form');go(CONFIG.FORM_URL,'Configure o link em CONFIG.FORM_URL no topo do código.');};
+$('#ctaInsta').onclick=()=>{track('cta_insta');go(CONFIG.INSTA_URL,'Configure o link em CONFIG.INSTA_URL no topo do código.');};
 
 /* convite automático: uma vez, após ~30s mexendo na agenda */
 let nudgeShown=false,nudgeTimer=null;
@@ -791,6 +837,7 @@ let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(rend
     const el=document.createElement('div');el.className='fcard';el.style.borderLeftColor=c.color;el.style.marginBottom='0';
     el.innerHTML='<b style="color:'+c.text+'">'+c.name+'</b><span>'+c.desc+'</span>';cc.appendChild(el);});}
   const had=await load();
+  if(!S.lead)S.lead={nome:'',whatsapp:'',email:''};
   if(S.a1.meetAM==null){S.a1.meetAM=S.a1.meetP==='manhã'?(S.a1.meetH||60):60;
     S.a1.meetPM=S.a1.meetP==='tarde'?(S.a1.meetH||60):60;S.a1.meetEve=0;}
   if(S.a1.bfT==null){S.a1.bfT='07:00';S.a1.bfD=45;}
@@ -806,6 +853,7 @@ let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(rend
   if(S.a1.vazAM===90&&S.a1.vazPM===90&&S.a1.vazPMp==='fim')S.a1.vazPMp='começo';
   if(Array.isArray(S.real))S.real.forEach(b=>{if(b.c==='trabalho'){b.c='f1';b._w=1;}if(b.c==='reun')b.c='f2';});
   UID=S.uid||1;
+  track('site_view');
   if(!had||S.phase==='w1'){S.phase='w1';S.step=0;refresh();openWizard();}
   else refresh();
 })();

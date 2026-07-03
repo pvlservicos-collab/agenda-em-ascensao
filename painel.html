@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Painel · Agenda em Ascensão</title>
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#1A1916; --ink:#ECEAE3; --muted:#928E84; --line:#332F2A;
+  --card:#232220; --field:#16100D; --gold:#C99746; --green:#2FAE8C; --red:#C96B62;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:var(--bg);color:var(--ink);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px}
+h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:500}
+
+/* login */
+#screen-login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:36px 30px;width:100%;max-width:360px;text-align:center}
+.login-card h1{font-size:24px;color:var(--gold);margin-bottom:4px}
+.login-card p{font-size:13px;color:var(--muted);margin-bottom:24px}
+.login-field{text-align:left;margin-bottom:14px}
+.login-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.login-field input{width:100%;padding:11px 13px;background:var(--field);border:1px solid var(--line);
+  border-radius:9px;font:inherit;font-size:15px;color:var(--ink)}
+.login-field input:focus{outline:none;border-color:var(--gold)}
+.login-err{font-size:12px;color:var(--red);margin-bottom:12px;display:none}
+.btn-login{width:100%;padding:12px;background:var(--gold);border:none;border-radius:9px;
+  font:inherit;font-size:15px;font-weight:600;color:#1A1207;cursor:pointer}
+.btn-login:disabled{opacity:.5;cursor:not-allowed}
+
+/* shell */
+#screen-painel{display:none;min-height:100vh}
+.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:var(--card);
+  border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:10}
+.sidebar-logo{padding:20px 18px 14px;border-bottom:1px solid var(--line)}
+.sidebar-logo .title{font-family:'Fraunces',serif;font-size:18px;color:var(--ink)}
+.sidebar-logo .sub{font-size:11px;color:var(--gold);letter-spacing:.04em;margin-top:2px}
+nav{flex:1;padding:12px 10px}
+nav a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;
+  font-size:14px;color:var(--muted);text-decoration:none;cursor:pointer;margin-bottom:2px}
+nav a:hover{background:var(--field);color:var(--ink)}
+nav a.active{background:var(--field);color:var(--gold);font-weight:600}
+.sidebar-bottom{padding:12px 10px;border-top:1px solid var(--line)}
+.btn-sair{width:100%;padding:9px;background:transparent;border:1px solid var(--line);border-radius:9px;
+  font:inherit;font-size:13px;color:var(--muted);cursor:pointer}
+.btn-sair:hover{border-color:var(--red);color:var(--red)}
+.main{margin-left:220px;padding:26px 26px 60px;min-height:100vh}
+.page-header{margin-bottom:20px}
+.page-header h2{font-size:21px}
+.page-header p{font-size:13px;color:var(--muted);margin-top:2px}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+.period-filter{display:flex;gap:8px;margin-bottom:18px}
+.period-filter button{padding:6px 14px;border-radius:8px;border:1px solid var(--line);
+  background:transparent;font:inherit;font-size:13px;color:var(--muted);cursor:pointer}
+.period-filter button.active{background:var(--gold);border-color:var(--gold);color:#1A1207;font-weight:600}
+
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:22px}
+.stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.stat-card .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.stat-card .val{font-size:26px;font-weight:600}
+.stat-card.green .val{color:var(--green)}
+.stat-card.gold .val{color:var(--gold)}
+
+.chart-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:22px}
+.chart-box h3{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:14px;font-family:'Inter'}
+.chart-box canvas{max-height:230px}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar input{flex:1;min-width:200px;padding:9px 12px;background:var(--field);border:1px solid var(--line);
+  border-radius:9px;font:inherit;font-size:14px;color:var(--ink)}
+.toolbar input:focus{outline:none;border-color:var(--gold)}
+
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+thead th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;
+  padding:11px 14px;border-bottom:1px solid var(--line)}
+tbody td{padding:11px 14px;font-size:13.5px;border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--field)}
+.wa-link{color:var(--green);text-decoration:none;font-weight:600}
+.wa-link:hover{text-decoration:underline}
+.empty-msg{padding:30px;text-align:center;color:var(--muted);font-size:13px}
+.pager{display:flex;justify-content:center;gap:10px;margin-top:14px;align-items:center;font-size:13px;color:var(--muted)}
+.pager button{padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);
+  font:inherit;font-size:13px;cursor:pointer}
+.pager button:disabled{opacity:.4;cursor:not-allowed}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="screen-login">
+  <div class="login-card">
+    <h1>Painel</h1>
+    <p>Agenda em Ascensão · ASCENSÃO TITÃ</p>
+    <div class="login-field"><label>Usuário</label><input id="l-user" type="text" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('l-senha').focus()"></div>
+    <div class="login-field"><label>Senha</label><input id="l-senha" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
+    <div class="login-err" id="login-err"></div>
+    <button class="btn-login" id="btn-login" onclick="fazerLogin()">Entrar</button>
+  </div>
+</div>
+
+<div id="screen-painel">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="title">Ascensão Titã</div>
+      <div class="sub">PAINEL</div>
+    </div>
+    <nav>
+      <a data-tab="funil" class="active" onclick="mudarTab('funil')">📈 Funil</a>
+      <a data-tab="leads" onclick="mudarTab('leads')">🧑‍🤝‍🧑 Leads</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-sair" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- FUNIL -->
+    <div class="tab-content active" id="tab-funil">
+      <div class="page-header"><h2>Funil</h2><p>Visitas, agendas concluídas e cliques de CTA</p></div>
+      <div class="period-filter" id="periodFilter">
+        <button data-period="hoje">Hoje</button>
+        <button data-period="7d" class="active">7 dias</button>
+        <button data-period="30d">30 dias</button>
+      </div>
+      <div class="cards-grid">
+        <div class="stat-card"><div class="lbl">Visitas</div><div class="val" id="st-site">—</div></div>
+        <div class="stat-card gold"><div class="lbl">Dados preenchidos</div><div class="val" id="st-leads">—</div></div>
+        <div class="stat-card green"><div class="lbl">Agenda concluída</div><div class="val" id="st-wizard">—</div></div>
+        <div class="stat-card"><div class="lbl">Cliques em CTA</div><div class="val" id="st-cta">—</div></div>
+      </div>
+      <div class="chart-box">
+        <h3>Evolução diária</h3>
+        <canvas id="chartFunil"></canvas>
+      </div>
+    </div>
+
+    <!-- LEADS -->
+    <div class="tab-content" id="tab-leads">
+      <div class="page-header"><h2>Leads</h2><p>Pessoas que preencheram nome e WhatsApp</p></div>
+      <div class="toolbar">
+        <input id="leadSearch" type="text" placeholder="Buscar por nome ou WhatsApp…" oninput="buscarLeadsDebounced()">
+      </div>
+      <table>
+        <thead><tr><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Data</th></tr></thead>
+        <tbody id="leadsBody"></tbody>
+      </table>
+      <div id="leadsEmpty" class="empty-msg hidden">Nenhum lead encontrado.</div>
+      <div class="pager">
+        <button id="pgPrev" onclick="mudarPagina(-1)">← Anterior</button>
+        <span id="pgInfo">página 1</span>
+        <button id="pgNext" onclick="mudarPagina(1)">Próxima →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let periodoAtual='7d', paginaAtual=1, buscaAtual='', totalLeads=0, chart=null;
+
+async function api(path,opts){
+  const res=await fetch(path,Object.assign({credentials:'same-origin'},opts||{}));
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error||('Erro '+res.status));
+  return data;
+}
+
+async function fazerLogin(){
+  const user=document.getElementById('l-user').value.trim();
+  const senha=document.getElementById('l-senha').value;
+  const err=document.getElementById('login-err');
+  const btn=document.getElementById('btn-login');
+  err.style.display='none';
+  if(!user||!senha){err.textContent='Preencha usuário e senha.';err.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Entrando…';
+  try{
+    await api('/api/admin/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user,senha})});
+    mostrarPainel();
+  }catch(e){
+    err.textContent=e.message;err.style.display='block';
+  }finally{
+    btn.disabled=false;btn.textContent='Entrar';
+  }
+}
+
+function logout(){
+  api('/api/admin/auth',{method:'DELETE'}).catch(()=>{}).finally(()=>{
+    document.getElementById('screen-painel').style.display='none';
+    document.getElementById('screen-login').style.display='flex';
+  });
+}
+
+function mostrarPainel(){
+  document.getElementById('screen-login').style.display='none';
+  document.getElementById('screen-painel').style.display='block';
+  carregarFunil();
+  carregarLeads();
+}
+
+function mudarTab(tab){
+  document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active',a.dataset.tab===tab));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.toggle('active',c.id==='tab-'+tab));
+}
+
+document.getElementById('periodFilter').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-period]');if(!b)return;
+  periodoAtual=b.dataset.period;
+  document.querySelectorAll('#periodFilter button').forEach(x=>x.classList.toggle('active',x===b));
+  carregarFunil();
+});
+
+async function carregarFunil(){
+  try{
+    const d=await api('/api/admin/funil?period='+periodoAtual);
+    document.getElementById('st-site').textContent=d.site_view;
+    document.getElementById('st-leads').textContent=d.leads;
+    document.getElementById('st-wizard').textContent=d.wizard_complete;
+    document.getElementById('st-cta').textContent=d.cta_click;
+    desenharGrafico(d.serie);
+  }catch(e){
+    if(String(e.message).includes('autenticado')) return logout();
+  }
+}
+
+function desenharGrafico(serie){
+  const labels=serie.map(s=>s.data.slice(5).split('-').reverse().join('/'));
+  const ctx=document.getElementById('chartFunil').getContext('2d');
+  const cfg={
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Visitas',data:serie.map(s=>s.site_view),borderColor:'#928E84',backgroundColor:'transparent',tension:.3},
+      {label:'Agenda concluída',data:serie.map(s=>s.wizard_complete),borderColor:'#2FAE8C',backgroundColor:'transparent',tension:.3},
+      {label:'Cliques CTA',data:serie.map(s=>s.cta_click),borderColor:'#C99746',backgroundColor:'transparent',tension:.3},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{ticks:{color:'#928E84'},grid:{color:'#332F2A'}},y:{beginAtZero:true,ticks:{color:'#928E84'},grid:{color:'#332F2A'}}},
+      plugins:{legend:{labels:{color:'#ECEAE3'}}}}
+  };
+  if(chart){chart.data=cfg.data;chart.update();}
+  else chart=new Chart(ctx,cfg);
+}
+
+let searchTimer;
+function buscarLeadsDebounced(){
+  clearTimeout(searchTimer);
+  searchTimer=setTimeout(()=>{buscaAtual=document.getElementById('leadSearch').value.trim();paginaAtual=1;carregarLeads();},350);
+}
+
+async function carregarLeads(){
+  try{
+    const qs=new URLSearchParams({page:paginaAtual});
+    if(buscaAtual)qs.set('q',buscaAtual);
+    const d=await api('/api/admin/leads?'+qs.toString());
+    totalLeads=d.total;
+    const body=document.getElementById('leadsBody');
+    body.innerHTML='';
+    document.getElementById('leadsEmpty').classList.toggle('hidden',d.itens.length>0);
+    d.itens.forEach(l=>{
+      const tr=document.createElement('tr');
+      const dt=new Date(l.criado_em).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+      tr.innerHTML='<td>'+esc(l.nome)+'</td>'+
+        '<td><a class="wa-link" target="_blank" href="https://wa.me/55'+esc(l.whatsapp)+'">'+formatarFone(l.whatsapp)+'</a></td>'+
+        '<td>'+esc(l.email||'—')+'</td><td>'+dt+'</td>';
+      body.appendChild(tr);
+    });
+    const totalPaginas=Math.max(1,Math.ceil(totalLeads/20));
+    document.getElementById('pgInfo').textContent='página '+paginaAtual+' de '+totalPaginas;
+    document.getElementById('pgPrev').disabled=paginaAtual<=1;
+    document.getElementById('pgNext').disabled=paginaAtual>=totalPaginas;
+  }catch(e){
+    if(String(e.message).includes('autenticado')) return logout();
+  }
+}
+
+function mudarPagina(delta){
+  paginaAtual=Math.max(1,paginaAtual+delta);
+  carregarLeads();
+}
+
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function formatarFone(digits){
+  digits=String(digits||'');
+  if(digits.length===11) return '('+digits.slice(0,2)+') '+digits.slice(2,7)+'-'+digits.slice(7);
+  if(digits.length===10) return '('+digits.slice(0,2)+') '+digits.slice(2,6)+'-'+digits.slice(6);
+  return digits;
+}
+
+/* tenta reaproveitar sessão já aberta */
+(async function(){
+  try{await api('/api/admin/funil?period=hoje');mostrarPainel();}catch(e){}
+})();
+</script>
+</body>
+</html>

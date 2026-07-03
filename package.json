@@ -1,0 +1,9 @@
+{
+  "name": "agenda-em-ascensao",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Agenda em Ascensão — ASCENSÃO TITÃ",
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0"
+  }
+}
