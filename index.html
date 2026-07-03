@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Minha Agenda em Ascensão</title>
+<link rel="icon" type="image/png" href="cropped-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -11,7 +12,7 @@
   :root{
     color-scheme:dark;
     --bg:#1A1916; --ink:#ECEAE3; --muted:#928E84; --line:#332F2A;
-    --card:#232220; --field:#16100D; --gold:#C99746; --green:#2FAE8C;
+    --card:#232220; --field:#16100D; --gold:#C99F36; --green:#2FAE8C;
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink);
@@ -20,6 +21,7 @@
   .wrap{max-width:1100px;margin:0 auto;padding:18px 16px 80px}
 
   .brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .brand-logo{height:28px;width:auto;align-self:center;flex:none}
   .brand h1{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:26px;margin:0;color:var(--ink)}
   .brand .by{font-size:12px;color:var(--gold);letter-spacing:.04em}
   .sub{color:var(--muted);font-size:13px;margin-top:2px}
@@ -89,14 +91,14 @@
   .footer .hint{font-size:12px;color:var(--muted)}
   .reset{font:inherit;font-size:12px;color:var(--muted);background:none;border:none;text-decoration:underline;cursor:pointer}
 
-  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:100}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
   .scrim.open{display:flex}
-  @media(min-width:640px){.scrim{align-items:center;padding:20px}}
-  .sheet{background:var(--card);width:100%;max-width:540px;border-radius:18px 18px 0 0;padding:20px 18px 22px;
-    border:1px solid var(--line);box-shadow:0 -12px 44px rgba(0,0,0,.5);max-height:92vh;overflow-y:auto}
-  @media(min-width:640px){.sheet{border-radius:18px}}
+  .sheet{background:var(--card);width:100%;max-width:540px;border-radius:18px;padding:20px 18px 22px;
+    border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,.5);max-height:92vh;overflow-y:auto}
   .sheet h3{margin:0 0 4px;font-family:'Fraunces',serif;font-weight:500;font-size:22px}
   .sheet .step{font-size:12px;color:var(--gold);font-weight:600;margin-bottom:2px;letter-spacing:.03em}
+  .wprogress{height:5px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:18px}
+  .wprogress-bar{height:100%;width:0%;background:var(--gold);border-radius:99px;transition:width .35s ease}
   .sheet .lead{font-size:13px;color:var(--muted);margin-bottom:14px}
   .field{margin-bottom:14px}
   .field>label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
@@ -123,11 +125,11 @@
   .dur .dval{font-size:15px;font-weight:600;min-width:74px;text-align:center}
   .nav{display:flex;gap:10px;margin-top:14px}
   .nav .back{flex:none;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 16px;font:inherit;cursor:pointer}
-  .nav .next{flex:1;background:var(--green);border:none;color:#0E1A16;border-radius:10px;padding:11px;font:inherit;font-weight:600;cursor:pointer;font-size:15px}
+  .nav .next{flex:1;background:var(--gold);border:none;color:#1A1207;border-radius:10px;padding:11px;font:inherit;font-weight:600;cursor:pointer;font-size:15px}
   .nav .next.gold{background:var(--gold);color:#1A1207}
   .row{display:flex;gap:10px;margin-top:8px}
   .row .del{flex:none;color:#E69A92;background:var(--field);border:1px solid #4a2b28;border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer}
-  .row .done{flex:1;color:#0E1A16;background:var(--green);border:none;border-radius:10px;padding:10px;font:inherit;font-weight:600;cursor:pointer}
+  .row .done{flex:1;color:#1A1207;background:var(--gold);border:none;border-radius:10px;padding:10px;font:inherit;font-weight:600;cursor:pointer}
   .fcard{border-left:3px solid;border-radius:8px;padding:8px 11px;background:var(--field);margin-bottom:8px}
   .fcard b{display:block;font-size:13px}
   .fcard span{font-size:12px;color:var(--muted)}
@@ -172,6 +174,7 @@
 <body>
 <div class="wrap">
   <div class="brand">
+    <img src="cropped-logo.png" alt="Ascensão Titã" class="brand-logo">
     <h1>Minha Agenda em Ascensão</h1>
     <span class="by">ASCENSÃO TITÃ</span>
   </div>
@@ -237,7 +240,10 @@
 
 <!-- assistente -->
 <div class="scrim" id="wScrim">
-  <div class="sheet" id="wSheet"></div>
+  <div class="sheet">
+    <div class="wprogress"><div class="wprogress-bar" id="wProgressBar"></div></div>
+    <div id="wSheet"></div>
+  </div>
 </div>
 
 <!-- confirmação (própria, sem depender do navegador) -->
@@ -777,7 +783,12 @@ function nav(sh,backLabel,nextLabel,guard){
   };
   n.appendChild(nx);sh.appendChild(n);
 }
-function renderWizard(){wSheet.innerHTML='';W1[S.step](wSheet);}
+function renderWizard(){
+  wSheet.innerHTML='';W1[S.step](wSheet);
+  const pct=Math.round(S.step/(W1.length-1)*100);
+  const bar=document.getElementById('wProgressBar');
+  if(bar)bar.style.width=pct+'%';
+}
 function openWizard(){wScrim.classList.add('open');renderWizard();}
 function closeWizard(){wScrim.classList.remove('open');}
 </script>
