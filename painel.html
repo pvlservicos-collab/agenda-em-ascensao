@@ -14,7 +14,8 @@
 :root{
   color-scheme:dark;
   --bg:#1A1916; --ink:#ECEAE3; --muted:#928E84; --line:#332F2A;
-  --card:#232220; --field:#16100D; --gold:#C99746; --green:#2FAE8C; --red:#C96B62;
+  --card:#232220; --card2:#1D1C1A; --field:#16100D; --gold:#C99746; --green:#2FAE8C; --red:#C96B62;
+  --card-grad:linear-gradient(180deg,var(--card),var(--card2));
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100vh;background:var(--bg);color:var(--ink);
@@ -23,7 +24,7 @@ h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:500}
 
 /* login */
 #screen-login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.login-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:36px 30px;width:100%;max-width:360px;text-align:center}
+.login-card{background:var(--card-grad);border:1px solid var(--line);border-radius:16px;padding:36px 30px;width:100%;max-width:360px;text-align:center}
 .login-card h1{font-size:24px;color:var(--gold);margin-bottom:4px}
 .login-card p{font-size:13px;color:var(--muted);margin-bottom:24px}
 .login-field{text-align:left;margin-bottom:14px}
@@ -38,7 +39,7 @@ h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:500}
 
 /* shell */
 #screen-painel{display:none;min-height:100vh}
-.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:var(--card);
+.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:var(--card-grad);
   border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:10}
 .sidebar-logo{padding:20px 18px 14px;border-bottom:1px solid var(--line)}
 .sidebar-logo .title{font-family:'Fraunces',serif;font-size:18px;color:var(--ink)}
@@ -65,13 +66,13 @@ nav a.active{background:var(--field);color:var(--gold);font-weight:600}
 .period-filter button.active{background:var(--gold);border-color:var(--gold);color:#1A1207;font-weight:600}
 
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:22px}
-.stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.stat-card{background:var(--card-grad);border:1px solid var(--line);border-radius:12px;padding:16px}
 .stat-card .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
 .stat-card .val{font-size:26px;font-weight:600}
 .stat-card.green .val{color:var(--green)}
 .stat-card.gold .val{color:var(--gold)}
 
-.chart-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:22px}
+.chart-box{background:var(--card-grad);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:22px}
 .chart-box h3{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:14px;font-family:'Inter'}
 .chart-box canvas{max-height:230px}
 
@@ -80,7 +81,7 @@ nav a.active{background:var(--field);color:var(--gold);font-weight:600}
   border-radius:9px;font:inherit;font-size:14px;color:var(--ink)}
 .toolbar input:focus{outline:none;border-color:var(--gold)}
 
-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse;background:var(--card-grad);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 thead th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;
   padding:11px 14px;border-bottom:1px solid var(--line)}
 tbody td{padding:11px 14px;font-size:13.5px;border-bottom:1px solid var(--line)}

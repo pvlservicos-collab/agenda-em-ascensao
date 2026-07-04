@@ -13,7 +13,8 @@
 :root{
   color-scheme:dark;
   --bg:#1A1916; --ink:#ECEAE3; --muted:#928E84; --line:#332F2A;
-  --card:#232220; --field:#16100D; --gold:#C99746; --green:#2FAE8C; --red:#C96B62;
+  --card:#232220; --card2:#1D1C1A; --field:#16100D; --gold:#C99746; --green:#2FAE8C; --red:#C96B62;
+  --card-grad:linear-gradient(180deg,var(--card),var(--card2));
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100vh;background:var(--bg);color:var(--ink);
@@ -26,7 +27,7 @@ h1,h2{font-family:'Fraunces',Georgia,serif;font-weight:500}
 .page-header h1{font-size:23px;margin-bottom:6px}
 .page-header p{font-size:14px;color:var(--muted);line-height:1.6}
 
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:18px}
+.card{background:var(--card-grad);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:18px}
 .card-header{padding:16px 20px;border-bottom:1px solid var(--line)}
 .card-header h2{font-size:17px}
 .card-header p{font-size:13px;color:var(--muted);margin-top:3px}
