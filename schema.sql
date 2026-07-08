@@ -7,9 +7,12 @@ CREATE TABLE IF NOT EXISTS leads (
   whatsapp    TEXT NOT NULL UNIQUE,
   email       TEXT,
   session_id  TEXT,
+  agenda      JSONB,
   criado_em   TIMESTAMPTZ NOT NULL DEFAULT now(),
   atualizado_em TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS agenda JSONB;
 
 CREATE TABLE IF NOT EXISTS eventos (
   id          BIGSERIAL PRIMARY KEY,
