@@ -109,7 +109,15 @@
     border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink)}
   .field input:focus,.field select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,151,70,.22)}
   .two{display:flex;gap:10px}.two>div{flex:1;min-width:0}
-  @media(max-width:480px){.two{flex-direction:column;gap:14px}}
+  @media(max-width:480px){
+    .two{flex-direction:column;gap:8px}
+    .field{margin-bottom:10px}
+    .field>label{margin-bottom:4px}
+    .actrow{padding:8px;margin-bottom:8px}
+    .actrow input[type=text]{padding:8px 10px;margin-bottom:6px}
+    .actrow .ar2{gap:6px}
+    .actrow select{padding:7px 8px}
+  }
   .tstep{display:flex;gap:6px;align-items:stretch}
   .tstep input[type=time]{flex:1;min-width:0}
   .tstep button{width:38px;flex:none;border:1px solid var(--line);background:var(--field);border-radius:10px;color:var(--ink);font-size:18px;cursor:pointer;padding:0}
