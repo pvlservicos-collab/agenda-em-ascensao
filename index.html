@@ -61,7 +61,7 @@
 
   .cal{background:var(--card-grad);border:1px solid var(--line);border-radius:14px;overflow:hidden}
   .calvp{position:relative;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
-  .calcontent{position:relative}
+  .calcontent{position:relative;padding-bottom:64px}
   .corner{position:absolute;top:0;left:0;z-index:100;background:var(--card);border-bottom:1px solid var(--line);border-right:1px solid var(--line);will-change:transform}
   .dayhead{position:absolute;top:0;left:0;z-index:90;display:flex;background:var(--card);border-bottom:1px solid var(--line);will-change:transform}
   .dayhead .gut{flex:none}
@@ -83,10 +83,10 @@
   .block .bt{font-weight:600;font-size:var(--fs,13px);line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical}
   .block .btime{font-size:var(--fst,11px);opacity:.8;margin-top:1px;font-variant-numeric:tabular-nums;white-space:nowrap}
   .block.contnight{border-bottom-left-radius:0;border-bottom-right-radius:0}
-  .block.contnight::after{content:'';position:absolute;left:0;right:0;bottom:0;height:16px;border-radius:0 0 4px 4px;pointer-events:none;
+  .block.contnight::after{content:'';position:absolute;left:0;right:0;bottom:2px;height:var(--bar-h,16px);border-radius:0 0 4px 4px;pointer-events:none;
     background:repeating-linear-gradient(-45deg,rgba(255,255,255,.10) 0 5px,transparent 5px 10px)}
-  .block .grip{position:absolute;left:0;right:0;bottom:0;height:10px;cursor:ns-resize;touch-action:pan-x pan-y}
-  .block .grip::after{content:"";position:absolute;left:50%;bottom:3px;transform:translateX(-50%);width:22px;height:3px;border-radius:2px;background:currentColor;opacity:.4}
+  .block .grip{position:absolute;left:0;right:0;bottom:0;height:var(--grip-h,4px);cursor:ns-resize;touch-action:pan-x pan-y}
+  .block .grip::after{content:"";position:absolute;left:50%;bottom:var(--grip-offset,1px);transform:translateX(-50%);width:var(--grip-w,12px);height:var(--grip-th,2px);border-radius:2px;background:currentColor;opacity:.28}
 
   .footer{margin-top:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
   .footer .hint{font-size:13px;color:var(--muted)}
@@ -116,6 +116,12 @@
   .tstep button:active{transform:scale(.96)}
   .readout{font-size:14px;color:var(--green);font-weight:600;margin:-4px 0 10px}
   .chips{display:flex;gap:6px;flex-wrap:wrap}
+  @media(max-width:480px){
+    .brand{flex-direction:column;align-items:flex-start;gap:4px}
+    .brand-logo{height:24px;align-self:flex-start}
+    .brand h1{font-size:24px;line-height:1.1}
+    .brand .by{order:2;margin:0;font-size:12px;letter-spacing:.06em}
+  }
   .chip{flex:1 1 auto;min-width:46px;text-align:center;border:1px solid var(--line);border-radius:9px;padding:8px 8px;
     font-size:13.5px;background:var(--field);color:var(--ink);cursor:pointer}
   .chip.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold);color:var(--gold);font-weight:600}
@@ -304,8 +310,8 @@ const CONFIG={
 /* ================================================ */
 
 const START=300, SNAP=15, GUT=46, HOUR=60, PX=HOUR/60, HEADER_H=44;
-const DAY_END=1440, GRID_CAP=1620; // meia-noite; teto da grade em 03:00 do dia seguinte
-let END=DAY_END;
+const DAY_END=1440, GRID_CAP=1620, EXTRA_AFTER_MIDNIGHT=48; // meia-noite + margem extra visual
+let END=DAY_END+EXTRA_AFTER_MIDNIGHT;
 const DAYS=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 const CATS={
   f1:{name:'Farol 1 · rumo às metas',color:'#8A5CF6',text:'#C4B0FB',bg:'rgba(138,92,246,.22)',desc:'As atividades que geram progresso rumo às suas metas. Inclui o seu trabalho, que é o motor do resultado financeiro.'},
@@ -379,9 +385,9 @@ function syncToServer(){
 }
 
 function computeEnd(blocks){
-  let latest=DAY_END;
+  let latest=DAY_END+EXTRA_AFTER_MIDNIGHT;
   (blocks||[]).forEach(b=>{if(b.c!=='sono'){const e=b.s+b.d;if(e>latest)latest=e;}});
-  latest=Math.min(latest,GRID_CAP);
+  latest=Math.min(latest,GRID_CAP+EXTRA_AFTER_MIDNIGHT);
   END=Math.ceil(latest/60)*60;   // arredonda pra hora cheia
 }
 function activeBlocks(){return S.real;}
@@ -464,13 +470,20 @@ function makeBlock(b){const r=clipRect(b.s,b.d);if(!r.vis)return null;const cat=
   el.style.backgroundImage='linear-gradient('+cat.bg+','+cat.bg+')';
   el.style.color=cat.text;el.style.borderLeftColor=cat.color;
   let fs=13,pad='3px 7px';
-  if(gapH<16){fs=9;pad='0px 6px';}
-  else if(gapH<22){fs=10;pad='1px 6px';}
-  else if(gapH<32){fs=11;pad='2px 7px';}
-  else if(gapH<44){fs=12;pad='2px 7px';}
+  let barH=2;
+  let gripH=4,gripW=12,gripTh=2,gripOffset=1;
+  if(gapH<16){fs=9;pad='0px 6px';barH=1;gripH=2;gripW=8;gripTh=1;gripOffset=0;}
+  else if(gapH<22){fs=10;pad='1px 6px';barH=1;gripH=3;gripW=10;gripTh=1;gripOffset=0;}
+  else if(gapH<32){fs=11;pad='2px 7px';barH=1;gripH=3;gripW=10;gripTh=1;gripOffset=1;}
+  else if(gapH<44){fs=12;pad='2px 7px';barH=1;gripH=4;gripW=12;gripTh=2;gripOffset=1;}
   el.style.setProperty('--fs',fs+'px');
   el.style.setProperty('--fst',Math.max(8,fs-2)+'px');
   el.style.setProperty('--bp',pad);
+  el.style.setProperty('--bar-h',barH+'px');
+  el.style.setProperty('--grip-h',gripH+'px');
+  el.style.setProperty('--grip-w',gripW+'px');
+  el.style.setProperty('--grip-th',gripTh+'px');
+  el.style.setProperty('--grip-offset',gripOffset+'px');
   const showTime=b.d>=45&&!(b._split&&cols>2);
   el.innerHTML='<div class="bt">'+esc(b.t||'Sem nome')+'</div>'+(showTime?'<div class="btime">'+label(b.s)+'–'+label(b.s+b.d)+'</div>':'')+'<div class="grip"></div>';
   attachDrag(el,b);return el;}
