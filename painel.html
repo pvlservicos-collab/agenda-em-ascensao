@@ -76,15 +76,25 @@ nav a.active{background:var(--field);color:var(--gold);font-weight:600}
 .chart-box h3{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:14px;font-family:'Inter'}
 .chart-box canvas{max-height:230px}
 
-.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
 .toolbar input{flex:1;min-width:200px;padding:9px 12px;background:var(--field);border:1px solid var(--line);
   border-radius:9px;font:inherit;font-size:14px;color:var(--ink)}
 .toolbar input:focus{outline:none;border-color:var(--gold)}
+.toolbar input[type=date]{flex:none;min-width:0;color-scheme:dark}
+.toolbar .datesep{color:var(--muted);font-size:13px}
+.toolbar .btn-clear{flex:none;padding:9px 12px;background:transparent;border:1px solid var(--line);border-radius:9px;
+  font:inherit;font-size:13px;color:var(--muted);cursor:pointer}
+.toolbar .btn-clear:hover{color:var(--ink);border-color:var(--ink)}
+.btn-export{flex:none;margin-left:auto;padding:9px 16px;background:var(--green);border:none;border-radius:9px;
+  font:inherit;font-size:14px;font-weight:600;color:#0E1A16;cursor:pointer;white-space:nowrap}
+.btn-export:hover{filter:brightness(1.08)}
 
-table{width:100%;border-collapse:collapse;background:var(--card-grad);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-thead th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;
-  padding:11px 14px;border-bottom:1px solid var(--line)}
-tbody td{padding:11px 14px;font-size:13.5px;border-bottom:1px solid var(--line)}
+.table-scroll{overflow-x:auto;background:var(--card-grad);border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;
+  padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+thead th.priority{color:var(--gold)}
+tbody td{padding:8px 10px;font-size:12.5px;border-bottom:1px solid var(--line);white-space:nowrap}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover{background:var(--field)}
 .wa-link{color:var(--green);text-decoration:none;font-weight:600}
@@ -153,11 +163,24 @@ tbody tr:hover{background:var(--field)}
       <div class="page-header"><h2>Leads</h2><p>Pessoas que preencheram nome e WhatsApp</p></div>
       <div class="toolbar">
         <input id="leadSearch" type="text" placeholder="Buscar por nome ou WhatsApp…" oninput="buscarLeadsDebounced()">
+        <input id="leadFrom" type="date" onchange="aplicarFiltroData()">
+        <span class="datesep">até</span>
+        <input id="leadTo" type="date" onchange="aplicarFiltroData()">
+        <button type="button" class="btn-clear" onclick="limparFiltroData()">Limpar datas</button>
+        <button type="button" class="btn-export" onclick="exportarCsv()">⬇ Exportar CSV</button>
       </div>
-      <table>
-        <thead><tr><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Data</th></tr></thead>
-        <tbody id="leadsBody"></tbody>
-      </table>
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th class="priority">Nome</th><th class="priority">WhatsApp</th><th class="priority">E-mail</th><th class="priority">Data</th>
+            <th class="priority">Faturamento</th><th class="priority">Profissão</th>
+            <th>Sono</th><th>Trabalho</th><th>Deslocamento</th><th>Reuniões</th>
+            <th>Café da manhã</th><th>Almoço</th><th>Jantar</th><th>Treino</th>
+            <th>Pessoas importantes</th><th>Procrastinação</th>
+          </tr></thead>
+          <tbody id="leadsBody"></tbody>
+        </table>
+      </div>
       <div id="leadsEmpty" class="empty-msg hidden">Nenhum lead encontrado.</div>
       <div class="pager">
         <button id="pgPrev" onclick="mudarPagina(-1)">← Anterior</button>
@@ -169,7 +192,7 @@ tbody tr:hover{background:var(--field)}
 </div>
 
 <script>
-let periodoAtual='7d', paginaAtual=1, buscaAtual='', totalLeads=0, chart=null;
+let periodoAtual='7d', paginaAtual=1, buscaAtual='', dataDe='', dataAte='', totalLeads=0, chart=null;
 
 async function api(path,opts){
   const res=await fetch(path,Object.assign({credentials:'same-origin'},opts||{}));
@@ -259,10 +282,31 @@ function buscarLeadsDebounced(){
   searchTimer=setTimeout(()=>{buscaAtual=document.getElementById('leadSearch').value.trim();paginaAtual=1;carregarLeads();},350);
 }
 
+function aplicarFiltroData(){
+  dataDe=document.getElementById('leadFrom').value;
+  dataAte=document.getElementById('leadTo').value;
+  paginaAtual=1;carregarLeads();
+}
+function limparFiltroData(){
+  document.getElementById('leadFrom').value='';document.getElementById('leadTo').value='';
+  dataDe='';dataAte='';paginaAtual=1;carregarLeads();
+}
+function filtrosQS(){
+  const qs=new URLSearchParams();
+  if(buscaAtual)qs.set('q',buscaAtual);
+  if(dataDe)qs.set('from',dataDe);
+  if(dataAte)qs.set('to',dataAte);
+  return qs;
+}
+function exportarCsv(){
+  const qs=filtrosQS();
+  window.open('/api/admin/leads-export?'+qs.toString(),'_blank');
+}
+
 async function carregarLeads(){
   try{
-    const qs=new URLSearchParams({page:paginaAtual});
-    if(buscaAtual)qs.set('q',buscaAtual);
+    const qs=filtrosQS();
+    qs.set('page',paginaAtual);
     const d=await api('/api/admin/leads?'+qs.toString());
     totalLeads=d.total;
     const body=document.getElementById('leadsBody');
@@ -271,9 +315,22 @@ async function carregarLeads(){
     d.itens.forEach(l=>{
       const tr=document.createElement('tr');
       const dt=new Date(l.criado_em).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+      const ag=l.agenda||{};const a1=ag.a1||{};
       tr.innerHTML='<td>'+esc(l.nome)+'</td>'+
         '<td><a class="wa-link" target="_blank" href="https://wa.me/55'+esc(l.whatsapp)+'">'+formatarFone(l.whatsapp)+'</a></td>'+
-        '<td>'+esc(l.email||'—')+'</td><td>'+dt+'</td>';
+        '<td>'+esc(l.email||'—')+'</td><td>'+dt+'</td>'+
+        '<td>'+esc(fmtReceita(ag.receita))+'</td>'+
+        '<td>'+esc(ag.profissao||'—')+'</td>'+
+        '<td>'+esc(fmtSono(a1))+'</td>'+
+        '<td>'+esc(fmtTrabalho(a1))+'</td>'+
+        '<td>'+esc(fmtDeslocamento(a1))+'</td>'+
+        '<td>'+esc(fmtReunioes(a1))+'</td>'+
+        '<td>'+esc(fmtRefeicao(a1.bfT,a1.bfD))+'</td>'+
+        '<td>'+esc(fmtRefeicao(a1.lunchT,a1.lunchD))+'</td>'+
+        '<td>'+esc(fmtRefeicao(a1.dinT,a1.dinD))+'</td>'+
+        '<td>'+esc(fmtTreino(a1))+'</td>'+
+        '<td>'+esc(fmtPessoas(a1))+'</td>'+
+        '<td>'+esc(fmtProcrastinacao(a1))+'</td>';
       body.appendChild(tr);
     });
     const totalPaginas=Math.max(1,Math.ceil(totalLeads/20));
@@ -296,6 +353,66 @@ function formatarFone(digits){
   if(digits.length===11) return '('+digits.slice(0,2)+') '+digits.slice(2,7)+'-'+digits.slice(7);
   if(digits.length===10) return '('+digits.slice(0,2)+') '+digits.slice(2,6)+'-'+digits.slice(6);
   return digits;
+}
+
+/* ---------- formata as respostas da agenda pra tabela de leads ---------- */
+const DIAS_ABREV=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+function diasFmt(arr){
+  if(!Array.isArray(arr)||!arr.length) return '—';
+  return arr.slice().sort((a,b)=>a-b).map(i=>DIAS_ABREV[i]||'?').join(',');
+}
+function durNice(min){
+  min=Number(min)||0;
+  const h=Math.floor(min/60),m=min%60;
+  if(h&&m) return h+'h'+String(m).padStart(2,'0');
+  if(h) return h+'h';
+  return m+'min';
+}
+function fmtReceita(v){
+  if(!v) return '—';
+  return 'R$'+(v/1000)+'k';
+}
+function fmtSono(a1){
+  if(!a1||!a1.bed||!a1.wake) return '—';
+  return a1.bed+'–'+a1.wake;
+}
+function fmtTrabalho(a1){
+  if(!a1||!a1.ws||!a1.we) return '—';
+  return a1.ws+'–'+a1.we+' ('+diasFmt(a1.wdays)+')';
+}
+function fmtDeslocamento(a1){
+  if(!a1||!a1.commute) return '—';
+  return durNice(a1.commute)+'/trecho';
+}
+function fmtReunioes(a1){
+  if(!a1) return '—';
+  const partes=[];
+  if(a1.meetAM>0) partes.push('manhã '+durNice(a1.meetAM));
+  if(a1.meetPM>0) partes.push('tarde '+durNice(a1.meetPM));
+  if(a1.meetEve>0) partes.push('noite '+durNice(a1.meetEve));
+  return partes.length?partes.join(', '):'—';
+}
+function fmtRefeicao(hora,dur){
+  if(!hora) return '—';
+  return hora+' ('+durNice(dur)+')';
+}
+function fmtTreino(a1){
+  if(!a1||!a1.train) return 'Não';
+  return diasFmt(a1.trainDays)+' '+a1.trainT+' ('+durNice(a1.trainD)+')';
+}
+function fmtPessoas(a1){
+  if(!a1||!a1.ppl) return 'Não';
+  const partes=[];
+  if(a1.pplWkDays&&a1.pplWkDays.length) partes.push(diasFmt(a1.pplWkDays)+' '+a1.pplWkT);
+  if(a1.pplWeDays&&a1.pplWeDays.length) partes.push(diasFmt(a1.pplWeDays)+' '+a1.pplWeT);
+  return partes.length?partes.join(' / '):'Sim';
+}
+function fmtProcrastinacao(a1){
+  if(!a1) return '—';
+  const partes=[];
+  if(a1.vazAM>0) partes.push('manhã '+durNice(a1.vazAM));
+  if(a1.vazPM>0) partes.push('tarde '+durNice(a1.vazPM));
+  return partes.length?partes.join(', '):'—';
 }
 
 /* tenta reaproveitar sessão já aberta */

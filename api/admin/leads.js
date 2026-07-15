@@ -1,12 +1,8 @@
 const { sql, ensureSchema } = require('../../lib/db');
 const { requireAdmin } = require('../../lib/auth');
+const { buildLeadsWhere } = require('../../lib/leadsFilter');
 
 const PAGE_SIZE = 20;
-const PERIODOS = {
-  hoje: "date_trunc('day', now())",
-  '7d': "now() - interval '7 days'",
-  '30d': "now() - interval '30 days'",
-};
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -19,24 +15,13 @@ module.exports = async function handler(req, res) {
 
   const page = Math.max(1, parseInt(req.query.page, 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
-  const periodExpr = PERIODOS[req.query.period] || null;
-  const q = req.query.q ? String(req.query.q).trim() : '';
-  const like = `%${q}%`;
-
-  const whereParts = [];
-  const params = [];
-  if (periodExpr) whereParts.push(`criado_em >= ${periodExpr}`);
-  if (q) {
-    params.push(like);
-    whereParts.push(`(nome ILIKE $${params.length} OR whatsapp ILIKE $${params.length})`);
-  }
-  const where = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+  const { where, params } = buildLeadsWhere(req.query);
 
   const totalRows = await sql.query(`SELECT count(*)::int AS n FROM leads ${where}`, params);
   const total = totalRows[0].n;
 
   const itens = await sql.query(
-    `SELECT id, nome, whatsapp, email, criado_em FROM leads ${where}
+    `SELECT id, nome, whatsapp, email, criado_em, agenda FROM leads ${where}
      ORDER BY criado_em DESC LIMIT ${PAGE_SIZE} OFFSET ${offset}`,
     params
   );
