@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/painel", "destination": "/painel.html" },
+    { "source": "/painel/", "destination": "/painel.html" },
+    { "source": "/exclusao-dados", "destination": "/exclusao-dados.html" },
+    { "source": "/exclusao-dados/", "destination": "/exclusao-dados.html" }
+  ]
+}
