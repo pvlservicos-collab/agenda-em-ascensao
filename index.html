@@ -258,6 +258,15 @@
   </div>
 </div>
 
+<!-- cadastro / aplicação: abre ao clicar em "Preencher formulário de aplicação" -->
+<div class="scrim" id="cadScrim">
+  <div class="sheet">
+    <div class="wprogress" id="cadProgressWrap" style="display:none"><div class="wprogress-bar" id="cadProgressBar"></div></div>
+    <button type="button" class="sheet-x" id="cadCloseX" aria-label="Fechar">✕</button>
+    <div id="cadSheet"></div>
+  </div>
+</div>
+
 <!-- avatar + balão: convite automático após ~30s mexendo na agenda -->
 <div class="avatarWidget" id="avatarWidget">
   <div class="avatarBubble">
@@ -312,8 +321,8 @@
 <script>
 /* ====== CONFIG: coloque aqui os seus links ====== */
 const CONFIG={
-  FORM_URL:"",     // link do formulário de aplicação para o treinamento
-  DIAG_URL:""      // link pra agendar a sessão de diagnóstico com a equipe
+  DIAG_URL:"",     // link pra agendar a sessão de diagnóstico com a equipe
+  WHATS_URL:""     // link do WhatsApp pra "falar agora com um consultor" (tela final da aplicação)
 };
 /* ================================================ */
 
@@ -332,7 +341,7 @@ const CATS={
 const EDIT_CATS=['f1','f2','f3','desvio','vaz'];
 
 let S={ phase:'w1', step:0,
-  lead:{nome:'',whatsapp:'',email:''},
+  lead:{nome:'',whatsapp:'',email:'',profissao:'',receita:null},
   a1:{bed:'23:00',wake:'07:00',ws:'09:00',we:'18:00',wdays:[0,1,2,3,4],commute:15,meetAM:60,meetPM:60,meetEve:0,
       lunchT:'12:00',lunchD:60,bfT:'07:00',bfD:30,dinT:'21:00',dinD:60,train:true,trainDays:[0,2,4],trainT:'18:30',trainD:60,trainCom:15,
       ppl:true,pplWkDays:[0,1,2,3,4],pplWkT:'20:00',pplWkD:180,pplWeDays:[5,6],pplWeT:'11:00',pplWeD:420,vazAM:90,vazAMp:'começo',vazPM:90,vazPMp:'começo'},
@@ -387,7 +396,7 @@ function syncToServer(){
   syncTimer=setTimeout(()=>{
     try{fetch('/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({nome:S.lead.nome,whatsapp:S.lead.whatsapp,email:S.lead.email||null,session_id:SESSION_ID,
-        agenda:{a1:S.a1,real:S.real,uid:S.uid,phase:S.phase}})
+        agenda:{a1:S.a1,real:S.real,uid:S.uid,phase:S.phase,profissao:S.lead.profissao||null,receita:S.lead.receita||null}})
     }).catch(()=>{});}catch(e){}
   },600);
 }
@@ -942,7 +951,71 @@ $('#ctaOpen').onclick=openCta;
 $('#ctaCloseX').onclick=closeCta;
 ctaScrim.addEventListener('pointerdown',e=>{if(e.target===ctaScrim)closeCta();});
 $('#ctaDiag').onclick=()=>{track('cta_diag');go(CONFIG.DIAG_URL,'Configure o link em CONFIG.DIAG_URL no topo do código.');};
-$('#ctaForm').onclick=()=>{track('cta_form');go(CONFIG.FORM_URL,'Configure o link em CONFIG.FORM_URL no topo do código.');};
+$('#ctaForm').onclick=()=>{track('cta_form');closeCta();openCad();};
+
+/* ---------- cadastro / aplicação (2 etapas dentro do mesmo popup) ---------- */
+const cadScrim=$('#cadScrim');
+let cadStep=0;
+const RECEITA_OPTS=(()=>{const a=[];for(let v=2500;v<=50000;v+=2500)a.push(v);return a;})();
+const receitaFmt=v=>v>=50000?'R$50k+':('R$'+(v/1000).toString().replace('.',',')+'k');
+function navCad(sh,backLabel,nextLabel,guard){
+  const n=document.createElement('div');n.className='nav';
+  if(backLabel){const b=document.createElement('button');b.className='back';b.textContent=backLabel;
+    b.onclick=()=>{cadStep=Math.max(0,cadStep-1);renderCad();};n.appendChild(b);}
+  const nx=document.createElement('button');nx.className='next';nx.textContent=nextLabel;
+  nx.onclick=()=>{if(guard&&!guard())return;cadStep++;renderCad();};
+  n.appendChild(nx);sh.appendChild(n);
+}
+const CAD_STEPS=[
+  function cadIntro(sh){
+    sh.innerHTML='<h3>Você já tem sua semana</h3>'+
+      '<div class="lead">Agora o próximo passo é organizar as suas 24 horas de acordo com as suas prioridades reais, com método e acompanhamento.</div>'+
+      '<div class="lead">Clique no botão e conheça o método.</div>'+
+      '<div class="ctaopts" style="margin-top:14px"><button type="button" class="btn gold" id="cadIntroBtn">Avançar e conhecer o método</button></div>';
+    sh.querySelector('#cadIntroBtn').onclick=()=>{cadStep=1;renderCad();};
+  },
+  function cadProfissao(sh){
+    sh.innerHTML='<div class="step">1 DE 2</div><h3>Nos fale um pouco mais sobre como funciona sua rotina hoje</h3>'+
+      '<div class="field"><label>Qual é a sua profissão?</label><input type="text" id="qProf" placeholder="Ex.: Empresário, dentista, advogado…" value="'+esc(S.lead.profissao||'')+'"></div>'+
+      '<div class="lead" id="cadErr" style="color:#E69A92;display:none;margin-bottom:0"></div>';
+    const inp=sh.querySelector('#qProf');
+    inp.oninput=()=>S.lead.profissao=inp.value;
+    navCad(sh,'Voltar','Continuar',()=>{
+      if(!inp.value.trim()){const err=sh.querySelector('#cadErr');err.textContent='Conta pra gente sua profissão.';err.style.display='block';return false;}
+      S.lead.profissao=inp.value.trim();save();return true;
+    });
+  },
+  function cadReceita(sh){
+    sh.innerHTML='<div class="step">2 DE 2</div><h3>Qual é a sua receita mensal?</h3>'+
+      '<div class="field" id="qReceitaWrap"></div>'+
+      '<div class="lead" id="cadErr" style="color:#E69A92;display:none;margin-bottom:0"></div>';
+    const rb=()=>{const f=sh.querySelector('#qReceitaWrap');f.innerHTML='';
+      f.appendChild(chipRow(RECEITA_OPTS,S.lead.receita,v=>{S.lead.receita=v;rb();},receitaFmt));};
+    rb();
+    navCad(sh,'Voltar','Enviar aplicação',()=>{
+      if(!S.lead.receita){const err=sh.querySelector('#cadErr');err.textContent='Selecione uma faixa de receita.';err.style.display='block';return false;}
+      save();track('cta_form_submit',{profissao:S.lead.profissao,receita:S.lead.receita});return true;
+    });
+  },
+  function cadDone(sh){
+    sh.innerHTML='<h3>RECEBEMOS SUA APLICAÇÃO!</h3>'+
+      '<div class="lead">Agora vamos analisar seus dados para avaliar seu acesso ao método, um de nossos consultores vai entrar em contato com você!</div>'+
+      '<div class="lead">Caso queira adiantar seu contato, pode falar com um de nossos consultores disponíveis pelo acesso abaixo:</div>'+
+      '<div class="ctaopts" style="margin-top:14px"><button type="button" class="btn gold" id="cadDoneBtn">FALAR AGORA COM UM CONSULTOR</button></div>';
+    sh.querySelector('#cadDoneBtn').onclick=()=>{track('cta_consultor');go(CONFIG.WHATS_URL,'Configure o link em CONFIG.WHATS_URL no topo do código.');};
+  }
+];
+function renderCad(){
+  const sh=$('#cadSheet');sh.innerHTML='';
+  const wrap=$('#cadProgressWrap'),bar=$('#cadProgressBar');
+  if(cadStep===1||cadStep===2){wrap.style.display='';bar.style.width=(cadStep===1?'50%':'100%');}
+  else wrap.style.display='none';
+  CAD_STEPS[cadStep](sh);
+}
+function openCad(){cadStep=0;cadScrim.classList.add('open');renderCad();}
+function closeCad(){cadScrim.classList.remove('open');}
+$('#cadCloseX').onclick=closeCad;
+cadScrim.addEventListener('pointerdown',e=>{if(e.target===cadScrim)closeCad();});
 
 /* avatar com balão: aparece uma vez, após ~30s mexendo na agenda */
 let ctaAutoShown=false,ctaAutoTimer=null;
@@ -960,7 +1033,9 @@ let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(rend
     const el=document.createElement('div');el.className='fcard';el.style.borderLeftColor=c.color;el.style.marginBottom='0';
     el.innerHTML='<b style="color:'+c.text+'">'+c.name+'</b><span>'+c.desc+'</span>';cc.appendChild(el);});}
   const had=await load();
-  if(!S.lead)S.lead={nome:'',whatsapp:'',email:''};
+  if(!S.lead)S.lead={nome:'',whatsapp:'',email:'',profissao:'',receita:null};
+  if(S.lead.profissao==null)S.lead.profissao='';
+  if(S.lead.receita===undefined)S.lead.receita=null;
   if(S.a1.meetAM==null){S.a1.meetAM=S.a1.meetP==='manhã'?(S.a1.meetH||60):60;
     S.a1.meetPM=S.a1.meetP==='tarde'?(S.a1.meetH||60):60;S.a1.meetEve=0;}
   if(S.a1.bfT==null){S.a1.bfT='07:00';S.a1.bfD=45;}
