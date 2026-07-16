@@ -1314,6 +1314,7 @@
       <div class="footer">
         <span class="hint">Deslize pro lado pra ver os outros dias · toque pra editar · segure e arraste pra mover ·
           salva sozinho</span>
+        <button class="btn" id="exportIcs">📅 Exportar pro Google Calendar</button>
         <button class="reset" id="reset">Recomeçar do zero</button>
       </div>
       <div style="margin-top:6px"><a href="/politicadeprivacidade.html" style="font-size:12px;color:var(--muted)">Política de Privacidade</a>
@@ -2129,9 +2130,50 @@
     function refresh() {
       const hasReal = S.real.length > 0;
       $('#ctarow').style.display = hasReal ? 'flex' : 'none';
+      $('#exportIcs').style.display = hasReal ? '' : 'none';
       if (hasReal) armCtaAuto();
       renderCal();
     }
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function segundaDestaSemana() {
+      const d = new Date(); const dow = (d.getDay() + 6) % 7;
+      d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - dow);
+      return d;
+    }
+    function icsDT(date) {
+      return date.getFullYear() + pad2(date.getMonth() + 1) + pad2(date.getDate()) + 'T' + pad2(date.getHours()) + pad2(date.getMinutes()) + '00';
+    }
+    function icsEscape(s) {
+      return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+    }
+    function exportarIcs() {
+      if (!S.real.length) { toast('Monte sua agenda primeiro.'); return; }
+      const monday = segundaDestaSemana();
+      const stamp = icsDT(new Date());
+      const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Ascensao Tita//Agenda em Ascensao//PT', 'CALSCALE:GREGORIAN'];
+      S.real.forEach(b => {
+        const start = new Date(monday); start.setDate(monday.getDate() + b.day); start.setMinutes(start.getMinutes() + b.s);
+        const end = new Date(start); end.setMinutes(end.getMinutes() + b.d);
+        lines.push('BEGIN:VEVENT');
+        lines.push('UID:agenda-' + b.id + '-' + S.uid + '@ascensaotita.com.br');
+        lines.push('DTSTAMP:' + stamp);
+        lines.push('DTSTART:' + icsDT(start));
+        lines.push('DTEND:' + icsDT(end));
+        lines.push('RRULE:FREQ=WEEKLY');
+        lines.push('SUMMARY:' + icsEscape(b.t));
+        lines.push('END:VEVENT');
+      });
+      lines.push('END:VCALENDAR');
+      const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'minha-agenda-ascensao-tita.ics';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      track('export_ics');
+      toast('Baixado! Agora é só importar no Google Calendar (Configurações → Importar).');
+    }
+    $('#exportIcs').onclick = exportarIcs;
     let toastT;
     function toast(msg) {
       const t = $('#toast'); if (!t) return; t.textContent = msg; t.classList.add('show');

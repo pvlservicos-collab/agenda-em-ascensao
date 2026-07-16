@@ -1,6 +1,6 @@
 const { sql, ensureSchema, normalizeFone } = require('../lib/db');
 
-const EVENTOS_VALIDOS = new Set(['site_view', 'wizard_complete', 'cta_diag', 'cta_form', 'cta_form_submit', 'cta_consultor', 'cta_insta']);
+const EVENTOS_VALIDOS = new Set(['site_view', 'wizard_complete', 'cta_diag', 'cta_form', 'cta_form_submit', 'cta_consultor', 'cta_insta', 'export_ics']);
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
