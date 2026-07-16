@@ -1316,7 +1316,8 @@
           salva sozinho</span>
         <button class="reset" id="reset">Recomeçar do zero</button>
       </div>
-      <div style="margin-top:6px"><a href="/exclusao-dados.html" style="font-size:12px;color:var(--muted)">Solicitar
+      <div style="margin-top:6px"><a href="/politicadeprivacidade.html" style="font-size:12px;color:var(--muted)">Política de Privacidade</a>
+        · <a href="/exclusao-dados.html" style="font-size:12px;color:var(--muted)">Solicitar
           exclusão dos meus dados (LGPD)</a></div>
     </div>
   </div>
@@ -1401,7 +1402,7 @@
   <script>
     /* ====== CONFIG: coloque aqui os seus links ====== */
     const CONFIG = {
-      WHATS_URL: ""     // link do WhatsApp pra "falar agora com um consultor" (tela final da aplicação)
+      WHATS_URL: "https://api.whatsapp.com/send/?phone=555181018736"     // link do WhatsApp pra "falar agora com um consultor" (tela final da aplicação)
     };
     /* ================================================ */
 
@@ -1421,7 +1422,7 @@
 
     let S = {
       phase: 'w1', step: 0,
-      lead: { nome: '', whatsapp: '', email: '', profissao: '', receita: null },
+      lead: { nome: '', whatsapp: '', instagram: '', email: '', profissao: '', receita: null },
       a1: {
         bed: '23:00', wake: '07:00', ws: '09:00', we: '18:00', wdays: [0, 1, 2, 3, 4], commute: 15, meetAM: 60, meetPM: 60, meetEve: 0,
         lunchT: '12:00', lunchD: 60, bfT: '07:00', bfD: 30, dinT: '21:00', dinD: 60, train: true, trainDays: [0, 2, 4], trainT: '18:30', trainD: 60, trainCom: 15,
@@ -1493,7 +1494,7 @@
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               nome: S.lead.nome, whatsapp: S.lead.whatsapp, email: S.lead.email || null, session_id: SESSION_ID,
-              agenda: { a1: S.a1, real: S.real, uid: S.uid, phase: S.phase, profissao: S.lead.profissao || null, receita: S.lead.receita || null }
+              agenda: { a1: S.a1, real: S.real, uid: S.uid, phase: S.phase, instagram: S.lead.instagram || null, profissao: S.lead.profissao || null, receita: S.lead.receita || null }
             })
           }).catch(() => { });
         } catch (e) { }
@@ -1891,9 +1892,11 @@
           '<div class="step" style="margin-top:18px">COLOQUE SEUS DADOS</div>' +
           '<div class="field"><label>Nome</label><input type="text" id="qNome" placeholder="Seu nome" value="' + esc(S.lead.nome) + '"></div>' +
           '<div class="field"><label>WhatsApp</label><input type="tel" inputmode="numeric" id="qWhats" maxlength="16" placeholder="(11) 99999-0000" value="' + esc(S.lead.whatsapp) + '"></div>' +
+          '<div class="field"><label>@ do Instagram</label><input type="text" id="qInsta" placeholder="@seu.usuario" value="' + esc(S.lead.instagram || '') + '"></div>' +
           '<div class="lead" id="leadErr" style="color:#E69A92;display:none;margin-bottom:0"></div>';
-        const nomeI = sh.querySelector('#qNome'), whatsI = sh.querySelector('#qWhats');
+        const nomeI = sh.querySelector('#qNome'), whatsI = sh.querySelector('#qWhats'), instaI = sh.querySelector('#qInsta');
         nomeI.oninput = () => S.lead.nome = nomeI.value;
+        instaI.oninput = () => S.lead.instagram = instaI.value;
         const maskWhats = () => {
           let v = whatsI.value.replace(/\D/g, '').slice(0, 11);
           if (v.length > 10) v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
@@ -1908,7 +1911,7 @@
           const digits = whatsI.value.replace(/\D/g, '');
           const err = sh.querySelector('#leadErr');
           if (!nome || digits.length < 10) { err.textContent = 'Preencha nome e um WhatsApp válido.'; err.style.display = 'block'; return false; }
-          S.lead.nome = nome; S.lead.whatsapp = digits;
+          S.lead.nome = nome; S.lead.whatsapp = digits; S.lead.instagram = instaI.value.trim();
           save();
           return true;
         });
@@ -1932,7 +1935,7 @@
         nav(sh, 'Voltar', 'Continuar'); upd();
         const privRow = document.createElement('div');
         privRow.style.cssText = 'text-align:center;margin-top:12px;font-size:12px;color:var(--muted)';
-        privRow.innerHTML = 'Ao continuar, você concorda com nossa <a href="politicadeprivacidade.html" target="_blank" style="color:var(--gold);text-decoration:underline">Política de Privacidade</a>';
+        privRow.innerHTML = 'Ao continuar, você concorda com nossa <a href="/politicadeprivacidade.html" target="_blank" style="color:var(--gold);text-decoration:underline">Política de Privacidade</a>';
         sh.appendChild(privRow);
       },
       function trabalho(sh) {
@@ -2242,7 +2245,8 @@
         });
       }
       const had = await load();
-      if (!S.lead) S.lead = { nome: '', whatsapp: '', email: '', profissao: '', receita: null };
+      if (!S.lead) S.lead = { nome: '', whatsapp: '', instagram: '', email: '', profissao: '', receita: null };
+      if (S.lead.instagram == null) S.lead.instagram = '';
       if (S.lead.profissao == null) S.lead.profissao = '';
       if (S.lead.receita === undefined) S.lead.receita = null;
       if (S.a1.meetAM == null) {

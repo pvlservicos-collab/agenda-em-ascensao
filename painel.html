@@ -193,7 +193,7 @@ tbody tr:hover{background:var(--field)}
       <div class="table-scroll">
         <table>
           <thead><tr>
-            <th class="priority">Nome</th><th class="priority">WhatsApp</th><th class="priority">E-mail</th><th class="priority">Data</th>
+            <th class="priority">Nome</th><th class="priority">WhatsApp</th><th class="priority">Instagram</th><th class="priority">E-mail</th><th class="priority">Data</th>
             <th class="priority">Faturamento</th><th class="priority">Profissão</th>
             <th>Sono</th><th>Trabalho</th><th>Deslocamento</th><th>Reuniões</th>
             <th>Café da manhã</th><th>Almoço</th><th>Jantar</th><th>Treino</th>
@@ -339,6 +339,7 @@ async function carregarLeads(){
       const ag=l.agenda||{};const a1=ag.a1||{};
       tr.innerHTML='<td>'+esc(l.nome)+'</td>'+
         '<td><a class="wa-link" target="_blank" href="https://wa.me/55'+esc(l.whatsapp)+'">'+formatarFone(l.whatsapp)+'</a></td>'+
+        '<td>'+fmtInstagram(ag.instagram)+'</td>'+
         '<td>'+esc(l.email||'—')+'</td><td>'+dt+'</td>'+
         '<td>'+esc(fmtReceita(ag.receita))+'</td>'+
         '<td>'+esc(ag.profissao||'—')+'</td>'+
@@ -374,6 +375,13 @@ function formatarFone(digits){
   if(digits.length===11) return '('+digits.slice(0,2)+') '+digits.slice(2,7)+'-'+digits.slice(7);
   if(digits.length===10) return '('+digits.slice(0,2)+') '+digits.slice(2,6)+'-'+digits.slice(6);
   return digits;
+}
+
+function fmtInstagram(handle){
+  if(!handle) return '—';
+  const user=String(handle).trim().replace(/^@/,'');
+  if(!user) return '—';
+  return '<a class="wa-link" target="_blank" href="https://instagram.com/'+encodeURIComponent(user)+'">@'+esc(user)+'</a>';
 }
 
 /* ---------- formata as respostas da agenda pra tabela de leads ---------- */

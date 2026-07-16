@@ -63,7 +63,7 @@ module.exports = async function handler(req, res) {
     params
   );
 
-  const header = ['Nome', 'WhatsApp', 'E-mail', 'Data', 'Faturamento', 'Profissão',
+  const header = ['Nome', 'WhatsApp', 'Instagram', 'E-mail', 'Data', 'Faturamento', 'Profissão',
     'Sono', 'Trabalho', 'Deslocamento', 'Reuniões', 'Café da manhã', 'Almoço', 'Jantar',
     'Treino', 'Pessoas importantes', 'Procrastinação'];
 
@@ -71,7 +71,7 @@ module.exports = async function handler(req, res) {
     const ag = l.agenda || {}; const a1 = ag.a1 || {};
     const dt = new Date(l.criado_em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
     return [
-      l.nome, l.whatsapp, l.email || '—', dt, fmtReceita(ag.receita), ag.profissao || '—',
+      l.nome, l.whatsapp, ag.instagram || '—', l.email || '—', dt, fmtReceita(ag.receita), ag.profissao || '—',
       fmtSono(a1), fmtTrabalho(a1), fmtDeslocamento(a1), fmtReunioes(a1),
       fmtRefeicao(a1.bfT, a1.bfD), fmtRefeicao(a1.lunchT, a1.lunchD), fmtRefeicao(a1.dinT, a1.dinD),
       fmtTreino(a1), fmtPessoas(a1), fmtProcrastinacao(a1),
