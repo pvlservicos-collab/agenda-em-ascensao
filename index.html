@@ -1930,6 +1930,10 @@
         };
         sh.querySelector('#qBed').oninput = upd; sh.querySelector('#qWake').oninput = upd;
         nav(sh, 'Voltar', 'Continuar'); upd();
+        const privRow = document.createElement('div');
+        privRow.style.cssText = 'text-align:center;margin-top:12px;font-size:12px;color:var(--muted)';
+        privRow.textContent = 'Ao continuar, você concorda com nossa Política de Privacidade';
+        sh.appendChild(privRow);
       },
       function trabalho(sh) {
         sh.innerHTML = '<div class="step">2 DE 7</div><h3>Trabalho</h3><div class="lead">Seu bloco principal. Depois a gente detalha o que acontece dentro dele.</div>' +

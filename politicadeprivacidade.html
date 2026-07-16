@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Exclusão de Dados · Agenda em Ascensão</title>
+<link rel="icon" type="image/png" href="cropped-logo.png">
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#1A1916; --ink:#ECEAE3; --muted:#928E84; --line:#332F2A;
+  --card:#232220; --card2:#1D1C1A; --field:#16100D; --gold:#C99746; --green:#2FAE8C; --red:#C96B62;
+  --card-grad:linear-gradient(180deg,var(--card),var(--card2));
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:var(--bg);color:var(--ink);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.5}
+h1,h2{font-family:'Fraunces',Georgia,serif;font-weight:500}
+
+.page{max-width:520px;margin:0 auto;padding:40px 16px 60px}
+.page-header{text-align:center;margin-bottom:28px}
+.page-header .emoji{font-size:38px;margin-bottom:10px}
+.page-header h1{font-size:23px;margin-bottom:6px}
+.page-header p{font-size:14px;color:var(--muted);line-height:1.6}
+
+.card{background:var(--card-grad);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:18px}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--line)}
+.card-header h2{font-size:17px}
+.card-header p{font-size:13px;color:var(--muted);margin-top:3px}
+.card-body{padding:20px}
+
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:6px}
+.field input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;
+  font:inherit;font-size:16px;color:var(--ink);background:var(--field)}
+.field input:focus{outline:none;border-color:var(--gold)}
+.field input.error{border-color:var(--red)}
+.field .hint{font-size:12px;color:var(--muted);margin-top:4px}
+.err-msg{font-size:12px;color:var(--red);margin-top:4px;display:none}
+
+.btn-primary,.btn-danger,.btn-secondary{
+  width:100%;padding:13px;border-radius:10px;font:inherit;font-size:16px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;border:none}
+.btn-primary{background:var(--gold);color:#1A1207}
+.btn-danger{background:var(--red);color:#2b0f0c}
+.btn-primary:disabled,.btn-danger:disabled{opacity:.5;cursor:not-allowed}
+.btn-secondary{width:100%;padding:12px;border:1px solid var(--line);background:transparent;color:var(--ink);
+  font-weight:500;margin-top:8px}
+.btn-secondary:hover{border-color:var(--muted)}
+
+.spinner{width:16px;height:16px;border:2.5px solid rgba(0,0,0,.25);border-top-color:currentColor;
+  border-radius:50%;animation:spin .7s linear infinite;display:none}
+.loading .spinner{display:block}
+.loading .btn-text{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.preview-box{background:rgba(201,107,98,.12);border:1px solid var(--red);border-radius:12px;padding:16px;margin-bottom:18px}
+.preview-title{font-size:14px;font-weight:600;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.preview-item{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
+.preview-item:last-child{border-bottom:none}
+.preview-item .label{font-size:13.5px;color:var(--ink)}
+.preview-item .count{font-size:13.5px;font-weight:600;color:var(--red)}
+
+.confirm-row{display:flex;align-items:flex-start;gap:12px;background:var(--field);border:1px solid var(--line);
+  border-radius:10px;padding:14px;margin-bottom:16px;cursor:pointer}
+.confirm-row input[type=checkbox]{width:18px;height:18px;margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:var(--red)}
+.confirm-row label{font-size:13.5px;color:var(--muted);line-height:1.5;cursor:pointer}
+
+.alert{border-radius:10px;padding:13px 15px;margin-bottom:16px;font-size:13.5px;line-height:1.5}
+.alert-error{background:rgba(201,107,98,.14);border:1px solid var(--red);color:#F0B6AF}
+.alert-info{background:rgba(201,151,70,.12);border:1px solid var(--gold);color:#E7C892}
+
+.result-icon{text-align:center;font-size:48px;margin-bottom:10px}
+.result-title{text-align:center;font-size:19px;margin-bottom:8px;font-family:'Fraunces',serif}
+.result-desc{text-align:center;font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:18px}
+.result-details{background:var(--field);border-radius:10px;padding:14px;font-size:13px;color:var(--muted);
+  text-align:center;margin-bottom:16px}
+
+.legal-note{font-size:12px;color:var(--muted);text-align:center;line-height:1.7;margin-top:20px}
+.legal-note a{color:var(--gold);text-decoration:none}
+
+.not-found{text-align:center;padding:14px 0}
+.not-found .emoji{font-size:34px;margin-bottom:10px}
+.not-found p{font-size:13.5px;color:var(--muted)}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="page-header">
+    <div class="emoji">🗑️</div>
+    <h1>Exclusão de Dados</h1>
+    <p>Em cumprimento à Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018), você pode solicitar a remoção completa dos seus dados do nosso sistema.</p>
+  </div>
+
+  <!-- STEP 1: BUSCA -->
+  <div id="step-busca">
+    <div class="card">
+      <div class="card-header">
+        <h2>🔍 Localizar seus dados</h2>
+        <p>Informe o número de WhatsApp usado ao preencher a Agenda em Ascensão</p>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">Após localizar seus dados, você verá um resumo do que será removido antes de confirmar.</div>
+        <div class="field">
+          <label for="f-fone">Número de WhatsApp</label>
+          <input id="f-fone" type="tel" inputmode="numeric" maxlength="16" placeholder="(11) 99999-0000"
+            onkeydown="if(event.key==='Enter') buscarDados()">
+          <div class="hint">Use o mesmo número informado no formulário da agenda</div>
+          <span class="err-msg" id="err-fone">Número inválido</span>
+        </div>
+        <div class="alert alert-error hidden" id="busca-error"></div>
+        <button class="btn-primary" id="btn-buscar" onclick="buscarDados()">
+          <span class="btn-text">🔍 Localizar meus dados</span><span class="spinner"></span>
+        </button>
+      </div>
+    </div>
+    <div class="legal-note">
+      A exclusão é <strong>permanente e irreversível</strong>.<br>
+      Dúvidas? Fale com <a href="mailto:contato@ascensaotita.com.br">contato@ascensaotita.com.br</a>
+    </div>
+  </div>
+
+  <!-- STEP 2: PREVIEW -->
+  <div id="step-preview" class="hidden">
+    <div class="card">
+      <div class="card-header">
+        <h2>⚠️ Confirmar exclusão</h2>
+        <p id="preview-sub">Dados encontrados para o número informado</p>
+      </div>
+      <div class="card-body">
+        <div class="preview-box">
+          <div class="preview-title">⚠️ Dados que serão removidos permanentemente</div>
+          <div class="preview-item"><span class="label">🔐 Cadastro (nome, WhatsApp, e-mail)</span><span class="count">1</span></div>
+          <div class="preview-item"><span class="label">🖥️ Registros de uso da agenda</span><span class="count" id="preview-eventos">—</span></div>
+        </div>
+        <div class="alert alert-error" style="margin-bottom:16px">
+          <strong>Atenção:</strong> após a exclusão, perdemos qualquer histórico seu em nosso sistema. Esta ação não pode ser desfeita.
+        </div>
+        <div class="confirm-row" onclick="toggleConfirm()">
+          <input type="checkbox" id="chk-confirm" onclick="event.stopPropagation()" onchange="atualizarBotaoDelete()">
+          <label for="chk-confirm">Entendo que a exclusão é permanente e irreversível.</label>
+        </div>
+        <div class="alert alert-error hidden" id="delete-error"></div>
+        <button class="btn-danger" id="btn-deletar" onclick="deletarDados()" disabled>
+          <span class="btn-text">🗑️ Excluir meus dados definitivamente</span><span class="spinner"></span>
+        </button>
+        <button class="btn-secondary" onclick="voltarBusca()">← Voltar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: NÃO ENCONTRADO -->
+  <div id="step-not-found" class="hidden">
+    <div class="card"><div class="card-body">
+      <div class="not-found">
+        <div class="emoji">🔎</div>
+        <p>Não encontramos dados associados ao número <strong id="nf-fone"></strong> em nosso sistema.</p>
+      </div>
+      <button class="btn-secondary" onclick="voltarBusca()" style="margin-top:16px">← Tentar outro número</button>
+    </div></div>
+  </div>
+
+  <!-- STEP 4: SUCESSO -->
+  <div id="step-sucesso" class="hidden">
+    <div class="card"><div class="card-body">
+      <div class="result-icon">✅</div>
+      <div class="result-title">Dados excluídos com sucesso</div>
+      <div class="result-desc">Todos os seus dados foram removidos permanentemente de nosso sistema, em conformidade com a LGPD.</div>
+      <div class="result-details" id="sucesso-details"></div>
+      <button class="btn-secondary" onclick="location.href='/'">← Voltar ao início</button>
+    </div></div>
+    <div class="legal-note">Protocolo de exclusão registrado em <strong id="sucesso-data"></strong>.<br>Guarde este comprovante para seus registros.</div>
+  </div>
+
+</div>
+
+<script>
+const API={
+  get:    (fone)=>`/api/exclusao?fone=${encodeURIComponent(fone)}`,
+  delete: (fone)=>`/api/exclusao?fone=${encodeURIComponent(fone)}`,
+};
+let foneBusca='';
+
+document.addEventListener('DOMContentLoaded',()=>{
+  setupFoneMask();
+  const p=new URLSearchParams(location.search);
+  if(p.get('fone')) document.getElementById('f-fone').value=p.get('fone');
+});
+
+async function buscarDados(){
+  const el=document.getElementById('f-fone'), errEl=document.getElementById('err-fone'),
+        bErr=document.getElementById('busca-error'), btn=document.getElementById('btn-buscar');
+  errEl.style.display='none';bErr.classList.add('hidden');el.classList.remove('error');
+  const foneRaw=el.value.replace(/\D/g,'');
+  if(foneRaw.length<10){errEl.style.display='block';el.classList.add('error');return;}
+  foneBusca=foneRaw;btn.disabled=true;btn.classList.add('loading');
+  try{
+    const res=await fetch(API.get(foneRaw));
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||`Erro ${res.status}`);
+    if(!data.found) mostrarNotFound(foneRaw); else mostrarPreview(data);
+  }catch(err){
+    bErr.textContent='Erro ao consultar: '+err.message+'. Tente novamente.';
+    bErr.classList.remove('hidden');
+  }finally{
+    btn.disabled=false;btn.classList.remove('loading');
+  }
+}
+
+function mostrarPreview(data){
+  document.getElementById('preview-sub').textContent = data.nome ? `Dados de ${data.nome}` : 'Dados encontrados para o número informado';
+  document.getElementById('preview-eventos').textContent = data.eventos ?? 0;
+  document.getElementById('chk-confirm').checked=false;
+  document.getElementById('btn-deletar').disabled=true;
+  document.getElementById('delete-error').classList.add('hidden');
+  setStep('preview');
+}
+
+function mostrarNotFound(fone){
+  document.getElementById('nf-fone').textContent=formatarFone(fone);
+  setStep('not-found');
+}
+
+async function deletarDados(){
+  if(!document.getElementById('chk-confirm').checked) return;
+  const dErr=document.getElementById('delete-error'), btn=document.getElementById('btn-deletar');
+  dErr.classList.add('hidden');btn.disabled=true;btn.classList.add('loading');
+  try{
+    const res=await fetch(API.delete(foneBusca),{method:'DELETE'});
+    const data=await res.json();
+    if(!res.ok||!data.ok) throw new Error(data.error||`Erro ${res.status}`);
+    mostrarSucesso(data.deletados||{});
+  }catch(err){
+    dErr.textContent='Erro ao excluir: '+err.message+'. Tente novamente ou entre em contato.';
+    dErr.classList.remove('hidden');btn.disabled=false;btn.classList.remove('loading');
+  }
+}
+
+function mostrarSucesso(deletados){
+  const partes=[];
+  if(deletados.leads) partes.push(`${deletados.leads} cadastro${deletados.leads!==1?'s':''}`);
+  if(deletados.eventos) partes.push(`${deletados.eventos} registro${deletados.eventos!==1?'s':''} de uso`);
+  document.getElementById('sucesso-details').textContent = partes.length ? `Removidos: ${partes.join(', ')}.` : 'Dados removidos com sucesso.';
+  document.getElementById('sucesso-data').textContent = new Date().toLocaleString('pt-BR',{dateStyle:'long',timeStyle:'short'});
+  setStep('sucesso');
+}
+
+function setStep(step){
+  ['busca','preview','not-found','sucesso'].forEach(s=>{
+    const el=document.getElementById(`step-${s}`);
+    if(el) el.classList.toggle('hidden', s!==step);
+  });
+  window.scrollTo(0,0);
+}
+function voltarBusca(){ setStep('busca'); }
+function toggleConfirm(){
+  const chk=document.getElementById('chk-confirm');
+  chk.checked=!chk.checked;
+  atualizarBotaoDelete();
+}
+function atualizarBotaoDelete(){
+  document.getElementById('btn-deletar').disabled = !document.getElementById('chk-confirm').checked;
+}
+function setupFoneMask(){
+  document.getElementById('f-fone').addEventListener('input',function(){
+    let v=this.value.replace(/\D/g,'').slice(0,11);
+    if(v.length>10) v=v.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3');
+    else if(v.length>6) v=v.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3');
+    else if(v.length>2) v=v.replace(/(\d{2})(\d{0,5})/,'($1) $2');
+    else if(v.length>0) v=v.replace(/(\d{0,2})/,'($1');
+    this.value=v;
+  });
+}
+function formatarFone(digits){
+  if(digits.length===11) return `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;
+  if(digits.length===10) return `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;
+  return digits;
+}
+</script>
+</body>
+</html>
