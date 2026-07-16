@@ -106,6 +106,27 @@ tbody tr:hover{background:var(--field)}
 .pager button:disabled{opacity:.4;cursor:not-allowed}
 
 .hidden{display:none!important}
+
+/* mobile: menu vira barra no topo, conteúdo ocupa a largura toda embaixo */
+@media (max-width:768px){
+  .sidebar{position:static;width:100%;height:auto;flex-direction:row;flex-wrap:wrap;
+    align-items:center;border-right:none;border-bottom:1px solid var(--line)}
+  .sidebar-logo{padding:10px 12px;border-bottom:none;border-right:1px solid var(--line);
+    display:flex;align-items:center;gap:6px;white-space:nowrap;flex:none}
+  .sidebar-logo img{margin-bottom:0!important;height:20px}
+  .sidebar-logo .title{font-size:14px}
+  .sidebar-logo .sub{display:none}
+  nav{display:flex;flex:1;padding:6px 6px;gap:2px;overflow-x:auto}
+  nav a{margin-bottom:0;white-space:nowrap;padding:8px 8px;font-size:13px}
+  .sidebar-bottom{padding:6px 8px;border-top:none;border-left:1px solid var(--line);flex:none}
+  .btn-sair{width:auto;padding:7px 10px;font-size:12px;white-space:nowrap}
+  .main{margin-left:0;padding:18px 14px 40px}
+  .page-header h2{font-size:19px}
+  .cards-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+  .chart-box canvas{max-height:200px}
+  .toolbar #leadSearch{flex-basis:100%}
+  .toolbar .btn-export{flex-basis:100%;margin-left:0}
+}
 </style>
 </head>
 <body>
