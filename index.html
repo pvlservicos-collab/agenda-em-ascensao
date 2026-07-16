@@ -1932,7 +1932,7 @@
         nav(sh, 'Voltar', 'Continuar'); upd();
         const privRow = document.createElement('div');
         privRow.style.cssText = 'text-align:center;margin-top:12px;font-size:12px;color:var(--muted)';
-        privRow.textContent = 'Ao continuar, você concorda com nossa Política de Privacidade';
+        privRow.innerHTML = 'Ao continuar, você concorda com nossa <a href="politicadeprivacidade.html" target="_blank" style="color:var(--gold);text-decoration:underline">Política de Privacidade</a>';
         sh.appendChild(privRow);
       },
       function trabalho(sh) {
