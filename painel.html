@@ -135,7 +135,7 @@ tbody tr:hover{background:var(--field)}
   <div class="login-card">
     <h1>Painel</h1>
     <p>Agenda em Ascensão · ASCENSÃO TITÃ</p>
-    <div class="login-field"><label>Usuário</label><input id="l-user" type="text" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('l-senha').focus()"></div>
+    <div class="login-field"><label>Usuário</label><input id="l-user" type="text" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')document.getElementById('l-senha').focus()"></div>
     <div class="login-field"><label>Senha</label><input id="l-senha" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
     <div class="login-err" id="login-err"></div>
     <button class="btn-login" id="btn-login" onclick="fazerLogin()">Entrar</button>
