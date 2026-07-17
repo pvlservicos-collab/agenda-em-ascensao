@@ -1316,7 +1316,10 @@
           salva sozinho</span>
         <button class="reset" id="reset">Recomeçar do zero</button>
       </div>
-      <div style="margin-top:6px"><button class="btn" id="exportIcs">📅 Exportar pro Google Calendar</button></div>
+      <div style="margin-top:6px">
+        <button class="btn" id="exportIcs">📅 Exportar da agenda no formato .ics para importar no Google Calendar</button>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px">O arquivo é baixado no seu aparelho (pasta Downloads, no computador, ou Arquivos, no celular) — depois é só abrir o Google Calendar, ir em Configurações → Importar e exportar → Importar, e escolher esse arquivo.</div>
+      </div>
       <div style="margin-top:6px"><a href="/politicadeprivacidade.html" style="font-size:12px;color:var(--muted)">Política de Privacidade</a>
         · <a href="/exclusao-dados.html" style="font-size:12px;color:var(--muted)">Solicitar
           exclusão dos meus dados (LGPD)</a></div>
@@ -1395,6 +1398,21 @@
       <div class="lead">Isso apaga a sua agenda e volta pras perguntas do começo.</div>
       <div class="row"><button class="del" id="cfNo">Cancelar</button><button class="done" id="cfYes">Sim,
           recomeçar</button></div>
+    </div>
+  </div>
+
+  <div class="scrim" id="icsScrim">
+    <div class="sheet" style="max-width:440px">
+      <button type="button" class="sheet-x" id="icsCloseX" aria-label="Fechar">✕</button>
+      <h3>Como importar sua agenda no Google Calendar</h3>
+      <div class="lead">Siga o passo a passo — leva menos de 1 minuto.</div>
+      <ol style="padding-left:20px;color:var(--ink);font-size:14px;line-height:1.9;margin-bottom:16px">
+        <li>Clique em <b>"Baixar arquivo .ics"</b> abaixo. O arquivo cai na pasta <b>Downloads</b> (computador) ou <b>Arquivos</b> (celular).</li>
+        <li>Abra o <b>Google Calendar</b> (google.com/calendar ou o app).</li>
+        <li>Vá em <b>Configurações → Importar e exportar → Importar</b>.</li>
+        <li>Selecione o arquivo baixado. Pronto — sua agenda entra automaticamente, se repetindo toda semana.</li>
+      </ol>
+      <button type="button" class="btn gold" id="icsDownloadBtn" style="width:100%;justify-content:center">⬇ Baixar arquivo .ics</button>
     </div>
   </div>
 
@@ -2173,7 +2191,11 @@
       track('export_ics');
       toast('Baixado! Agora é só importar no Google Calendar (Configurações → Importar).');
     }
-    $('#exportIcs').onclick = exportarIcs;
+    const icsScrim = $('#icsScrim');
+    $('#exportIcs').onclick = () => icsScrim.classList.add('open');
+    $('#icsCloseX').onclick = () => icsScrim.classList.remove('open');
+    icsScrim.addEventListener('pointerdown', e => { if (e.target === icsScrim) icsScrim.classList.remove('open'); });
+    $('#icsDownloadBtn').onclick = () => { exportarIcs(); icsScrim.classList.remove('open'); };
     let toastT;
     function toast(msg) {
       const t = $('#toast'); if (!t) return; t.textContent = msg; t.classList.add('show');
