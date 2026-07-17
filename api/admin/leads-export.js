@@ -15,7 +15,6 @@ function durNice(min) {
   if (h) return h + 'h';
   return m + 'min';
 }
-function fmtReceita(v) { return v ? 'R$' + (v / 1000) + 'k' : '—'; }
 function fmtSono(a1) { return (a1 && a1.bed && a1.wake) ? a1.bed + '–' + a1.wake : '—'; }
 function fmtTrabalho(a1) { return (a1 && a1.ws && a1.we) ? a1.ws + '–' + a1.we + ' (' + diasFmt(a1.wdays) + ')' : '—'; }
 function fmtDeslocamento(a1) { return (a1 && a1.commute) ? durNice(a1.commute) + '/trecho' : '—'; }
@@ -63,7 +62,7 @@ module.exports = async function handler(req, res) {
     params
   );
 
-  const header = ['Nome', 'WhatsApp', 'Instagram', 'E-mail', 'Data', 'Faturamento', 'Profissão',
+  const header = ['Nome', 'WhatsApp', 'Instagram', 'E-mail', 'Data', 'Área de atuação', 'Aumento esperado (6m)', 'Já investiu',
     'Sono', 'Trabalho', 'Deslocamento', 'Reuniões', 'Café da manhã', 'Almoço', 'Jantar',
     'Treino', 'Pessoas importantes', 'Procrastinação'];
 
@@ -71,7 +70,7 @@ module.exports = async function handler(req, res) {
     const ag = l.agenda || {}; const a1 = ag.a1 || {};
     const dt = new Date(l.criado_em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
     return [
-      l.nome, l.whatsapp, ag.instagram || '—', l.email || '—', dt, fmtReceita(ag.receita), ag.profissao || '—',
+      l.nome, l.whatsapp, ag.instagram || '—', l.email || '—', dt, ag.area || '—', ag.aumento || '—', ag.investimento || '—',
       fmtSono(a1), fmtTrabalho(a1), fmtDeslocamento(a1), fmtReunioes(a1),
       fmtRefeicao(a1.bfT, a1.bfD), fmtRefeicao(a1.lunchT, a1.lunchD), fmtRefeicao(a1.dinT, a1.dinD),
       fmtTreino(a1), fmtPessoas(a1), fmtProcrastinacao(a1),

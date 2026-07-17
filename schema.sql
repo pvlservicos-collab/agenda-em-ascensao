@@ -19,13 +19,18 @@ CREATE TABLE IF NOT EXISTS eventos (
   tipo        TEXT NOT NULL,
   session_id  TEXT,
   whatsapp    TEXT,
+  lead_id     INTEGER REFERENCES leads(id) ON DELETE SET NULL,
   dados       JSONB,
   criado_em   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- liga cada evento ao lead pelo id do banco (mais confiável que casar por texto de whatsapp)
+ALTER TABLE eventos ADD COLUMN IF NOT EXISTS lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL;
+
 CREATE INDEX IF NOT EXISTS eventos_tipo_idx    ON eventos (tipo);
 CREATE INDEX IF NOT EXISTS eventos_criado_idx  ON eventos (criado_em);
 CREATE INDEX IF NOT EXISTS eventos_whats_idx   ON eventos (whatsapp);
+CREATE INDEX IF NOT EXISTS eventos_lead_idx    ON eventos (lead_id);
 CREATE INDEX IF NOT EXISTS leads_criado_idx    ON leads (criado_em);
 
 -- contador de tentativas por IP/rota, usado pelo rate limiter (lib/rateLimit.js)

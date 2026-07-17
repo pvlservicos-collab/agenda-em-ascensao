@@ -194,7 +194,7 @@ tbody tr:hover{background:var(--field)}
         <table>
           <thead><tr>
             <th class="priority">Nome</th><th class="priority">WhatsApp</th><th class="priority">Instagram</th><th class="priority">E-mail</th><th class="priority">Data</th>
-            <th class="priority">Faturamento</th><th class="priority">Profissão</th>
+            <th class="priority">Área de atuação</th><th class="priority">Aumento esperado (6m)</th><th class="priority">Já investiu</th>
             <th>Sono</th><th>Trabalho</th><th>Deslocamento</th><th>Reuniões</th>
             <th>Café da manhã</th><th>Almoço</th><th>Jantar</th><th>Treino</th>
             <th>Pessoas importantes</th><th>Procrastinação</th>
@@ -341,8 +341,9 @@ async function carregarLeads(){
         '<td><a class="wa-link" target="_blank" href="https://wa.me/55'+esc(l.whatsapp)+'">'+formatarFone(l.whatsapp)+'</a></td>'+
         '<td>'+fmtInstagram(ag.instagram)+'</td>'+
         '<td>'+esc(l.email||'—')+'</td><td>'+dt+'</td>'+
-        '<td>'+esc(fmtReceita(ag.receita))+'</td>'+
-        '<td>'+esc(ag.profissao||'—')+'</td>'+
+        '<td>'+esc(ag.area||'—')+'</td>'+
+        '<td>'+esc(ag.aumento||'—')+'</td>'+
+        '<td>'+esc(ag.investimento||'—')+'</td>'+
         '<td>'+esc(fmtSono(a1))+'</td>'+
         '<td>'+esc(fmtTrabalho(a1))+'</td>'+
         '<td>'+esc(fmtDeslocamento(a1))+'</td>'+
@@ -396,10 +397,6 @@ function durNice(min){
   if(h&&m) return h+'h'+String(m).padStart(2,'0');
   if(h) return h+'h';
   return m+'min';
-}
-function fmtReceita(v){
-  if(!v) return '—';
-  return 'R$'+(v/1000)+'k';
 }
 function fmtSono(a1){
   if(!a1||!a1.bed||!a1.wake) return '—';

@@ -184,8 +184,14 @@ h1,h2{font-family:'Fraunces',Georgia,serif;font-weight:500}
 
 <script>
 const API={
-  get:    (fone)=>`/api/exclusao?fone=${encodeURIComponent(fone)}`,
-  delete: (fone)=>`/api/exclusao?fone=${encodeURIComponent(fone)}`,
+  get:    (fone)=>{
+    const sid = localStorage.getItem('maa:sid') || '';
+    return `/api/exclusao?fone=${encodeURIComponent(fone)}&session_id=${encodeURIComponent(sid)}`;
+  },
+  delete: (fone)=>{
+    const sid = localStorage.getItem('maa:sid') || '';
+    return `/api/exclusao?fone=${encodeURIComponent(fone)}&session_id=${encodeURIComponent(sid)}`;
+  },
 };
 let foneBusca='';
 

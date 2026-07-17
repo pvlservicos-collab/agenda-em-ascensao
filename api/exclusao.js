@@ -17,8 +17,8 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'DELETE') {
-    // no máx. 1 tentativa a cada 2 min por IP...
-    if (await rateLimited(req, res, { scope: 'exclusao_delete_cooldown', limit: 1, windowMs: 2 * 60 * 1000 })) return;
+    // no máx. 1 tentativa a cada 1 min por IP
+    if (await rateLimited(req, res, { scope: 'exclusao_delete_cooldown', limit: 1, windowMs: 1 * 60 * 1000 })) return;
     // ...e no máx. 2 exclusões por IP (janela bem longa = efetivamente um limite permanente)
     if (await rateLimited(req, res, { scope: 'exclusao_delete_max', limit: 2, windowMs: 10 * 365 * 24 * 60 * 60 * 1000 })) return;
 

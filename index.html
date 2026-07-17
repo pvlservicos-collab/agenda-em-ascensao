@@ -674,6 +674,75 @@
       gap: 8px
     }
 
+    .chips-grid1 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px
+    }
+
+    .chips-grid1 .chip {
+      text-align: left;
+      padding: 12px 14px
+    }
+
+    .revwrap .revcard {
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line)
+    }
+
+    .revwrap .revcard:first-child {
+      padding-top: 0
+    }
+
+    .revwrap .revcard:last-child {
+      border-bottom: none
+    }
+
+    .revwrap .revcard>b {
+      display: block;
+      font-size: 11px;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 7px
+    }
+
+    .revwrap .field {
+      margin-bottom: 7px
+    }
+
+    .revwrap .field:last-child {
+      margin-bottom: 0
+    }
+
+    .revwrap .field>label {
+      font-size: 11px;
+      margin-bottom: 3px
+    }
+
+    .revwrap .field input[type=text],
+    .revwrap .field input[type=time],
+    .revwrap .field select {
+      padding: 7px 9px;
+      font-size: 13.5px;
+      border-radius: 8px
+    }
+
+    .revwrap .two {
+      gap: 8px
+    }
+
+    .revwrap .chip {
+      padding: 6px 7px;
+      font-size: 12px;
+      min-width: 0
+    }
+
+    .revwrap .tstep button {
+      width: 30px;
+      font-size: 15px
+    }
+
     @media(max-width:480px) {
       .brand {
         flex-direction: column;
@@ -1441,7 +1510,7 @@
 
     let S = {
       phase: 'w1', step: 0,
-      lead: { nome: '', whatsapp: '', instagram: '', email: '', profissao: '', receita: null },
+      lead: { id: null, nome: '', whatsapp: '', instagram: '', email: '', area: '', aumento: '', investimento: '' },
       a1: {
         bed: '23:00', wake: '07:00', ws: '09:00', we: '18:00', wdays: [0, 1, 2, 3, 4], commute: 15, meetAM: 60, meetPM: 60, meetEve: 0,
         lunchT: '12:00', lunchD: 60, bfT: '07:00', bfD: 30, dinT: '21:00', dinD: 60, train: true, trainDays: [0, 2, 4], trainT: '18:30', trainD: 60, trainCom: 15,
@@ -1499,7 +1568,7 @@
       try {
         fetch('/api/track', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.assign({ event: evt, session_id: SESSION_ID, whatsapp: (S && S.lead && S.lead.whatsapp) || null }, extra || {}))
+          body: JSON.stringify(Object.assign({ event: evt, session_id: SESSION_ID, whatsapp: (S && S.lead && S.lead.whatsapp) || null, lead_id: (S && S.lead && S.lead.id) || null }, extra || {}))
         }).catch(() => { });
       } catch (e) { }
     }
@@ -1512,9 +1581,16 @@
           fetch('/api/leads', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              nome: S.lead.nome, whatsapp: S.lead.whatsapp, email: S.lead.email || null, session_id: SESSION_ID,
-              agenda: { a1: S.a1, real: S.real, uid: S.uid, phase: S.phase, instagram: S.lead.instagram || null, profissao: S.lead.profissao || null, receita: S.lead.receita || null }
+              id: S.lead.id || null, nome: S.lead.nome, whatsapp: S.lead.whatsapp, email: S.lead.email || null, session_id: SESSION_ID,
+              agenda: { a1: S.a1, real: S.real, uid: S.uid, phase: S.phase, instagram: S.lead.instagram || null, area: S.lead.area || null, aumento: S.lead.aumento || null, investimento: S.lead.investimento || null }
             })
+          }).then(r => r.json()).then(data => {
+            // guarda o id do banco assim que soubermos — próximas sincronizações (ex.: as respostas
+            // do popup de CTA) passam a atualizar essa mesma linha por id, sem depender só do whatsapp.
+            if (data && data.id && S.lead.id !== data.id) {
+              S.lead.id = data.id;
+              try { localStorage.setItem('maa:v2', JSON.stringify(S)); } catch (e) { }
+            }
           }).catch(() => { });
         } catch (e) { }
       }, 600);
@@ -2070,6 +2146,151 @@
         };
         rba(); rbp(); nav(sh, 'Voltar', 'Continuar');
       },
+      function revisao(sh) {
+        sh.innerHTML = '<div class="step">REVISÃO</div><h3>Confere se ficou do seu jeito</h3>' +
+          '<div class="lead" style="margin-bottom:8px">Dá uma olhada rápida nas suas respostas. Pode apagar e ajustar qualquer coisa direto aqui, sem precisar voltar.</div>' +
+          '<div class="revwrap" id="revList"></div>';
+        const rl = sh.querySelector('#revList');
+        const durOpts5 = [15, 30, 45, 60, 120];
+        const durOptsMeal = [30, 45, 60, 90, 120];
+
+        const cSono = document.createElement('div'); cSono.className = 'revcard';
+        cSono.innerHTML = '<b>Sono</b><div class="two">' +
+          '<div class="field"><label>Vou dormir às</label>' + tfield('rBed', S.a1.bed) + '</div>' +
+          '<div class="field"><label>Acordo às</label>' + tfield('rWake', S.a1.wake) + '</div></div>';
+        rl.appendChild(cSono);
+        cSono.querySelector('#rBed').oninput = e => S.a1.bed = e.target.value;
+        cSono.querySelector('#rWake').oninput = e => S.a1.wake = e.target.value;
+
+        const cTrab = document.createElement('div'); cTrab.className = 'revcard';
+        cTrab.innerHTML = '<b>Trabalho</b><div class="two">' +
+          '<div class="field"><label>Começo às</label>' + tfield('rWs', S.a1.ws) + '</div>' +
+          '<div class="field"><label>Termino às</label>' + tfield('rWe', S.a1.we) + '</div></div>' +
+          '<div class="field"><label>Dias</label><div id="rWd"></div></div>' +
+          '<div class="field"><label>Deslocamento (cada trecho)</label><div id="rCom"></div></div>';
+        rl.appendChild(cTrab);
+        cTrab.querySelector('#rWs').oninput = e => S.a1.ws = e.target.value;
+        cTrab.querySelector('#rWe').oninput = e => S.a1.we = e.target.value;
+        cTrab.querySelector('#rWd').appendChild(dayChips(S.a1.wdays));
+        const comOpts = [0, 15, 30, 45, 60];
+        const rCom = () => {
+          const f = cTrab.querySelector('#rCom'); f.innerHTML = '';
+          f.appendChild(chipRow(comOpts, S.a1.commute, v => { S.a1.commute = v; rCom(); }, v => v === 0 ? 'Trabalho em casa' : durNice(v)));
+        };
+        rCom();
+
+        const cReu = document.createElement('div'); cReu.className = 'revcard';
+        cReu.innerHTML = '<b>Reuniões</b>' +
+          '<div class="field"><label>De manhã</label><div id="rMam"></div></div>' +
+          '<div class="field"><label>À tarde</label><div id="rMpm"></div></div>' +
+          '<div class="field"><label>À noite</label><div id="rMev"></div></div>';
+        rl.appendChild(cReu);
+        const meetOpts = [0, 60, 120, 180, 240, 300];
+        const meetFmt = v => v === 0 ? 'Nenhuma' : durNice(v);
+        const mkMeet = (sel, key) => {
+          const rb = () => {
+            const f = cReu.querySelector(sel); f.innerHTML = '';
+            f.appendChild(chipRow(meetOpts, S.a1[key], v => { S.a1[key] = v; rb(); }, meetFmt));
+          }; rb();
+        };
+        mkMeet('#rMam', 'meetAM'); mkMeet('#rMpm', 'meetPM'); mkMeet('#rMev', 'meetEve');
+
+        const cRef = document.createElement('div'); cRef.className = 'revcard';
+        cRef.innerHTML = '<b>Refeições</b>' +
+          '<div class="two"><div class="field"><label>Café da manhã</label>' + tfield('rBf', S.a1.bfT) + '</div>' +
+          '<div class="field"><label>Duração</label><select id="rBfD">' + durOpts5.map(v => '<option value="' + v + '"' + (v === S.a1.bfD ? ' selected' : '') + '>' + durNice(v) + '</option>').join('') + '</select></div></div>' +
+          '<div class="two"><div class="field"><label>Almoço</label>' + tfield('rLu', S.a1.lunchT) + '</div>' +
+          '<div class="field"><label>Duração</label><select id="rLuD">' + durOptsMeal.map(v => '<option value="' + v + '"' + (v === S.a1.lunchD ? ' selected' : '') + '>' + durNice(v) + '</option>').join('') + '</select></div></div>' +
+          '<div class="two"><div class="field"><label>Jantar</label>' + tfield('rDi', S.a1.dinT) + '</div>' +
+          '<div class="field"><label>Duração</label><select id="rDiD">' + durOptsMeal.map(v => '<option value="' + v + '"' + (v === S.a1.dinD ? ' selected' : '') + '>' + durNice(v) + '</option>').join('') + '</select></div></div>';
+        rl.appendChild(cRef);
+        cRef.querySelector('#rBf').oninput = e => S.a1.bfT = e.target.value;
+        cRef.querySelector('#rBfD').onchange = e => S.a1.bfD = +e.target.value;
+        cRef.querySelector('#rLu').oninput = e => S.a1.lunchT = e.target.value;
+        cRef.querySelector('#rLuD').onchange = e => S.a1.lunchD = +e.target.value;
+        cRef.querySelector('#rDi').oninput = e => S.a1.dinT = e.target.value;
+        cRef.querySelector('#rDiD').onchange = e => S.a1.dinD = +e.target.value;
+
+        const cTrn = document.createElement('div'); cTrn.className = 'revcard';
+        cTrn.innerHTML = '<b>Atividade física</b><div class="field" id="rTr"></div><div id="rTrDet"></div>';
+        rl.appendChild(cTrn);
+        const rbTrn = () => {
+          const f = cTrn.querySelector('#rTr'); f.innerHTML = '';
+          f.appendChild(chipRow([true, false], S.a1.train, v => { S.a1.train = v; rbTrn(); detTrn(); }, v => v ? 'Treino atualmente' : 'Não treino hoje'));
+        };
+        const detTrn = () => {
+          const f = cTrn.querySelector('#rTrDet'); f.innerHTML = '';
+          if (!S.a1.train) return;
+          f.innerHTML = '<div class="field"><label>Dias</label><div id="rTrD"></div></div>' +
+            '<div class="two"><div class="field"><label>Horário</label>' + tfield('rTrT', S.a1.trainT) + '</div>' +
+            '<div class="field"><label>Duração</label><select id="rTrDu">' + durOptsMeal.map(v => '<option value="' + v + '"' + (v === S.a1.trainD ? ' selected' : '') + '>' + durNice(v) + '</option>').join('') + '</select></div></div>' +
+            '<div class="field"><label>Deslocamento</label><div id="rTrC"></div></div>';
+          f.querySelector('#rTrD').appendChild(dayChips(S.a1.trainDays));
+          f.querySelector('#rTrT').oninput = e => S.a1.trainT = e.target.value;
+          f.querySelector('#rTrDu').onchange = e => S.a1.trainD = +e.target.value;
+          const rc = () => {
+            const c = f.querySelector('#rTrC'); c.innerHTML = '';
+            c.appendChild(chipRow([0, 15, 30, 45], S.a1.trainCom, v => { S.a1.trainCom = v; rc(); }, v => v === 0 ? 'Treino em casa' : durNice(v)));
+          };
+          rc();
+        };
+        rbTrn(); detTrn();
+
+        const cPes = document.createElement('div'); cPes.className = 'revcard';
+        cPes.innerHTML = '<b>Pessoas importantes</b><div class="field" id="rPp"></div><div id="rPpDet"></div>';
+        rl.appendChild(cPes);
+        const rbPes = () => {
+          const f = cPes.querySelector('#rPp'); f.innerHTML = '';
+          f.appendChild(chipRow([true, false], S.a1.ppl, v => { S.a1.ppl = v; rbPes(); detPes(); }, v => v ? 'Tenho momentos fixos' : 'Hoje não tenho'));
+        };
+        const durOptsWk = [60, 90, 120, 180, 240, 300];
+        const durOptsWe = [120, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720, 840, 960];
+        const detPes = () => {
+          const f = cPes.querySelector('#rPpDet'); f.innerHTML = '';
+          if (!S.a1.ppl) return;
+          f.innerHTML = '<div class="field"><label>Semana, em quais dias?</label><div id="rPwD"></div></div>' +
+            '<div class="two"><div class="field"><label>A partir de</label>' + tfield('rPwT', S.a1.pplWkT) + '</div>' +
+            '<div class="field"><label>Duração</label><select id="rPwDu">' + durOptsWk.map(v => '<option value="' + v + '"' + (v === S.a1.pplWkD ? ' selected' : '') + '>' + durNice(v) + '</option>').join('') + '</select></div></div>' +
+            '<div class="field" style="margin-top:2px"><label>Fim de semana, em quais dias?</label><div id="rWeD"></div></div>' +
+            '<div class="two"><div class="field"><label>A partir de</label>' + tfield('rWeT', S.a1.pplWeT) + '</div>' +
+            '<div class="field"><label>Duração</label><select id="rWeDu">' + durOptsWe.map(v => '<option value="' + v + '"' + (v === S.a1.pplWeD ? ' selected' : '') + '>' + durNice(v) + '</option>').join('') + '</select></div></div>';
+          f.querySelector('#rPwD').appendChild(dayChips(S.a1.pplWkDays, null, [0, 1, 2, 3, 4]));
+          f.querySelector('#rWeD').appendChild(dayChips(S.a1.pplWeDays, null, [5, 6]));
+          f.querySelector('#rPwT').oninput = e => S.a1.pplWkT = e.target.value;
+          f.querySelector('#rPwDu').onchange = e => S.a1.pplWkD = +e.target.value;
+          f.querySelector('#rWeT').oninput = e => S.a1.pplWeT = e.target.value;
+          f.querySelector('#rWeDu').onchange = e => S.a1.pplWeD = +e.target.value;
+        };
+        rbPes(); detPes();
+
+        const cVaz = document.createElement('div'); cVaz.className = 'revcard';
+        cVaz.innerHTML = '<b>Procrastinação</b>' +
+          '<div class="field"><label>De manhã</label><div id="rVa"></div></div>' +
+          '<div class="field"><label>À tarde</label><div id="rVp"></div></div>';
+        rl.appendChild(cVaz);
+        const rbVa = () => {
+          const f = cVaz.querySelector('#rVa'); f.innerHTML = '';
+          f.appendChild(chipRow(vazOpts, S.a1.vazAM, v => { S.a1.vazAM = v; rbVa(); }, vazFmt));
+        };
+        const rbVp = () => {
+          const f = cVaz.querySelector('#rVp'); f.innerHTML = '';
+          f.appendChild(chipRow(vazOpts, S.a1.vazPM, v => { S.a1.vazPM = v; rbVp(); }, vazFmt));
+        };
+        rbVa(); rbVp();
+
+        const n = document.createElement('div'); n.className = 'nav';
+        const b = document.createElement('button'); b.className = 'back'; b.textContent = 'Voltar';
+        b.onclick = () => { S.step = Math.max(0, S.step - 1); renderWizard(); };
+        n.appendChild(b);
+        const nx = document.createElement('button'); nx.className = 'next'; nx.textContent = 'Gerar agenda';
+        nx.onclick = () => {
+          S.real = buildReal(S.a1); S.uid = UID; S.phase = 'done';
+          refresh(); save(); track('wizard_complete');
+          S.step++; renderWizard();
+        };
+        n.appendChild(nx);
+        sh.appendChild(n);
+      },
       function pronto(sh) {
         sh.innerHTML = '<div class="step">TUDO PRONTO</div><h3>Sua semana está montada</h3>' +
           '<div class="lead">O que você vê a seguir é um ponto de partida, montado com as suas respostas. Agora é com você deixar do seu jeito:<br><br>' +
@@ -2077,7 +2298,11 @@
           '<b style="color:var(--ink)">Segure e arraste</b> pra mover, ou puxe a base pra mudar a duração.<br>' +
           '<b style="color:var(--ink)">Toque num espaço vazio</b> (ou no botão + Bloco) pra criar algo novo.<br><br>' +
           'Quanto mais completa ficar, mais claro fica o cálculo de horas de cada categoria, e pra onde o seu tempo vai.</div>';
-        nav(sh, 'Voltar', 'Ver minha semana');
+        const n = document.createElement('div'); n.className = 'nav';
+        const nx = document.createElement('button'); nx.className = 'next'; nx.textContent = 'Ver minha agenda';
+        nx.onclick = () => { closeWizard(); refresh(); };
+        n.appendChild(nx);
+        sh.appendChild(n);
       }
     ];
 
@@ -2211,12 +2436,13 @@
     $('#cfYes').onclick = () => { cfScrim.classList.remove('open'); doReset(); };
     cfScrim.addEventListener('pointerdown', e => { if (e.target === cfScrim) cfScrim.classList.remove('open'); });
 
-    /* ---------- contato / CTA: banner + aplicação em 2 etapas, no mesmo popup ---------- */
+    /* ---------- contato / CTA: banner + aplicação em 3 etapas, no mesmo popup ---------- */
     const ctaScrim = $('#ctaScrim'), avatarWidget = $('#avatarWidget');
     let ctaStep = 0;
     function go(url, fallbackMsg) { if (url) window.open(url, '_blank'); else toast(fallbackMsg); }
-    const RECEITA_OPTS = [5000, 10000, 20000, 30000, 40000, 50000];
-    const receitaFmt = v => 'R$' + (v / 1000) + 'k';
+    const AREA_OPTS = ['Empresário', 'Profissional Autônomo', 'CLT', 'Outro'];
+    const AUMENTO_OPTS = ['Mais de R$50.000/mês', 'R$25.000-R$50.000/mês', 'R$10.000-R$25.000/mês', 'R$1.000-R$10.000/mês', 'Menos de R$1.000/mês'];
+    const INVESTIMENTO_OPTS = ['Mais de R$50.000', 'R$31.000 à R$50.000', 'R$16.000 à R$30.000', 'R$5.000 à R$15.000', 'Até R$4.000', 'Não fiz esse tipo de investimento'];
     function navCta(sh, backLabel, nextLabel, guard) {
       const n = document.createElement('div'); n.className = 'nav';
       if (backLabel) {
@@ -2227,6 +2453,26 @@
       nx.onclick = () => { if (guard && !guard()) return; ctaStep++; renderCta(); };
       n.appendChild(nx); sh.appendChild(n);
     }
+    function ctaChoiceStep(field, stepLabel, titulo, opts, errMsg, nextLabel, onDone) {
+      return function (sh) {
+        sh.innerHTML = '<div class="step">' + stepLabel + '</div><h3>' + titulo + '</h3>' +
+          '<div class="field" id="qChoiceWrap"></div>' +
+          '<div class="lead" id="ctaErr" style="color:#E69A92;display:none;margin-bottom:0"></div>';
+        const rb = () => {
+          const f = sh.querySelector('#qChoiceWrap'); f.innerHTML = '';
+          const row = chipRow(opts, S.lead[field], v => { S.lead[field] = v; rb(); });
+          row.classList.add('chips-grid1');
+          f.appendChild(row);
+        };
+        rb();
+        navCta(sh, null, nextLabel, () => {
+          if (!S.lead[field]) { const err = sh.querySelector('#ctaErr'); err.textContent = errMsg; err.style.display = 'block'; return false; }
+          save();
+          if (onDone) onDone();
+          return true;
+        });
+      };
+    }
     const CTA_STEPS = [
       function ctaIntro(sh) {
         sh.innerHTML = '<h3>Você já tem sua semana</h3>' +
@@ -2235,33 +2481,10 @@
           '<div class="ctaopts" style="margin-top:14px"><button type="button" class="btn gold" id="ctaIntroBtn">Avançar e conhecer o método</button></div>';
         sh.querySelector('#ctaIntroBtn').onclick = () => { track('cta_form'); ctaStep = 1; renderCta(); };
       },
-      function ctaProfissao(sh) {
-        sh.innerHTML = '<div class="step">1 DE 2</div><h3>Nos fale um pouco mais sobre como funciona sua rotina hoje</h3>' +
-          '<div class="field"><label>Qual é a sua profissão?</label><input type="text" id="qProf" placeholder="Ex.: Empresário, dentista, advogado…" value="' + esc(S.lead.profissao || '') + '"></div>' +
-          '<div class="lead" id="ctaErr" style="color:#E69A92;display:none;margin-bottom:0"></div>';
-        const inp = sh.querySelector('#qProf');
-        inp.oninput = () => S.lead.profissao = inp.value;
-        navCta(sh, null, 'Continuar', () => {
-          if (!inp.value.trim()) { const err = sh.querySelector('#ctaErr'); err.textContent = 'Conta pra gente sua profissão.'; err.style.display = 'block'; return false; }
-          S.lead.profissao = inp.value.trim(); save(); return true;
-        });
-      },
-      function ctaReceita(sh) {
-        sh.innerHTML = '<div class="step">2 DE 2</div><h3>Qual é a sua receita mensal?</h3>' +
-          '<div class="field" id="qReceitaWrap"></div>' +
-          '<div class="lead" id="ctaErr" style="color:#E69A92;display:none;margin-bottom:0"></div>';
-        const rb = () => {
-          const f = sh.querySelector('#qReceitaWrap'); f.innerHTML = '';
-          const row = chipRow(RECEITA_OPTS, S.lead.receita, v => { S.lead.receita = v; rb(); }, receitaFmt);
-          row.classList.add('chips-grid3');
-          f.appendChild(row);
-        };
-        rb();
-        navCta(sh, null, 'Enviar aplicação', () => {
-          if (!S.lead.receita) { const err = sh.querySelector('#ctaErr'); err.textContent = 'Selecione uma faixa de receita.'; err.style.display = 'block'; return false; }
-          save(); track('cta_form_submit', { profissao: S.lead.profissao, receita: S.lead.receita }); return true;
-        });
-      },
+      ctaChoiceStep('area', '1 DE 3', 'Qual a sua área de atuação profissional?', AREA_OPTS, 'Escolha sua área de atuação.', 'Continuar'),
+      ctaChoiceStep('aumento', '2 DE 3', 'Na sua opinião, em quanto irá aumentar seu faturamento mensal nos próximos 6 meses?', AUMENTO_OPTS, 'Selecione uma faixa.', 'Continuar'),
+      ctaChoiceStep('investimento', '3 DE 3', 'Quanto você já investiu em imersões, cursos, treinamentos, mentorias e outros programas de desenvolvimento pessoal e profissional no último ano?', INVESTIMENTO_OPTS, 'Selecione uma faixa.', 'Enviar aplicação',
+        () => track('cta_form_submit', { area: S.lead.area, aumento: S.lead.aumento, investimento: S.lead.investimento })),
       function ctaDone(sh) {
         sh.innerHTML = '<div style="margin-bottom:8px">' +
           '<svg width="48" height="48" viewBox="0 -960 960 960" fill="currentColor" style="color:var(--green)" xmlns="http://www.w3.org/2000/svg">' +
@@ -2279,7 +2502,7 @@
     function renderCta() {
       const sh = $('#ctaSheet'); sh.innerHTML = '';
       const wrap = $('#ctaProgressWrap'), bar = $('#ctaProgressBar');
-      if (ctaStep === 1 || ctaStep === 2) { wrap.style.display = ''; bar.style.width = (ctaStep === 1 ? '50%' : '100%'); }
+      if (ctaStep >= 1 && ctaStep <= 3) { wrap.style.display = ''; bar.style.width = (ctaStep === 1 ? '33%' : ctaStep === 2 ? '66%' : '100%'); }
       else wrap.style.display = 'none';
       CTA_STEPS[ctaStep](sh);
     }
@@ -2309,10 +2532,12 @@
         });
       }
       const had = await load();
-      if (!S.lead) S.lead = { nome: '', whatsapp: '', instagram: '', email: '', profissao: '', receita: null };
+      if (!S.lead) S.lead = { id: null, nome: '', whatsapp: '', instagram: '', email: '', area: '', aumento: '', investimento: '' };
+      if (S.lead.id === undefined) S.lead.id = null;
       if (S.lead.instagram == null) S.lead.instagram = '';
-      if (S.lead.profissao == null) S.lead.profissao = '';
-      if (S.lead.receita === undefined) S.lead.receita = null;
+      if (S.lead.area == null) S.lead.area = '';
+      if (S.lead.aumento == null) S.lead.aumento = '';
+      if (S.lead.investimento == null) S.lead.investimento = '';
       if (S.a1.meetAM == null) {
         S.a1.meetAM = S.a1.meetP === 'manhã' ? (S.a1.meetH || 60) : 60;
         S.a1.meetPM = S.a1.meetP === 'tarde' ? (S.a1.meetH || 60) : 60; S.a1.meetEve = 0;
