@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /painel
+Disallow: /painel.html
+Disallow: /exclusao-dados
+Disallow: /api/

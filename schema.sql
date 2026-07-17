@@ -27,3 +27,10 @@ CREATE INDEX IF NOT EXISTS eventos_tipo_idx    ON eventos (tipo);
 CREATE INDEX IF NOT EXISTS eventos_criado_idx  ON eventos (criado_em);
 CREATE INDEX IF NOT EXISTS eventos_whats_idx   ON eventos (whatsapp);
 CREATE INDEX IF NOT EXISTS leads_criado_idx    ON leads (criado_em);
+
+-- contador de tentativas por IP/rota, usado pelo rate limiter (lib/rateLimit.js)
+CREATE TABLE IF NOT EXISTS rate_limits (
+  chave         TEXT PRIMARY KEY,
+  contagem      INT NOT NULL DEFAULT 1,
+  janela_inicio TIMESTAMPTZ NOT NULL DEFAULT now()
+);

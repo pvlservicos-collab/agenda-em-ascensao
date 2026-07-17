@@ -1,5 +1,7 @@
 const crypto = require('crypto');
 const { setSessionCookie, clearSessionCookie } = require('../../lib/auth');
+const { ensureSchema } = require('../../lib/db');
+const { rateLimited } = require('../../lib/rateLimit');
 
 function safeEqual(a, b) {
   const bufA = Buffer.from(String(a));
@@ -22,6 +24,9 @@ module.exports = async function handler(req, res) {
   if (!process.env.ADMIN_USER || !process.env.ADMIN_PASSWORD) {
     return res.status(500).json({ error: 'ADMIN_USER / ADMIN_PASSWORD não configuradas.' });
   }
+
+  await ensureSchema();
+  if (await rateLimited(req, res, { scope: 'admin_auth', limit: 5, windowMs: 15 * 60 * 1000 })) return;
 
   const body = req.body || {};
   const user = String(body.user || '');
