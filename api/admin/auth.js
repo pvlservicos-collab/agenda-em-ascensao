@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
   }
 
   await ensureSchema();
-  if (await rateLimited(req, res, { scope: 'admin_auth', limit: 5, windowMs: 15 * 60 * 1000 })) return;
+  if (await rateLimited(req, res, { scope: 'admin_auth', limit: 10, windowMs: 15 * 60 * 1000 })) return;
 
   const body = req.body || {};
   const user = String(body.user || '');
