@@ -160,7 +160,8 @@
       border-radius: 10px;
       padding: 9px 15px;
       cursor: pointer;
-      white-space: nowrap;
+      white-space: normal;
+      max-width: 100%;
       border: 1px solid var(--line);
       background: var(--field);
       color: var(--ink)
@@ -484,6 +485,37 @@
       justify-content: center;
       z-index: 100;
       padding: 16px
+    }
+
+    .confetti-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 200
+    }
+
+    .confetti-piece {
+      position: absolute;
+      top: -14px;
+      background: var(--gold);
+      pointer-events: none;
+      animation-name: confetti-fall;
+      animation-timing-function: ease-in;
+      animation-fill-mode: forwards;
+      will-change: transform, opacity
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        transform: translate(0, 0) rotate(0deg);
+        opacity: 1
+      }
+
+      100% {
+        transform: translate(var(--fall-x, 0), 110vh) rotate(var(--fall-r, 360deg));
+        opacity: 0
+      }
     }
 
     .scrim.open {
@@ -1396,7 +1428,7 @@
         <button class="reset" id="reset">Recomeçar do zero</button>
       </div>
       <div style="margin-top:6px">
-        <button class="btn" id="exportIcs">📅 Exportar da agenda no formato .ics para importar no Google Calendar</button>
+        <button class="btn" id="exportIcs" style="width:100%;text-align:center;line-height:1.35">📅 Exportar da agenda no formato .ics para importar no Google Calendar</button>
         <div style="font-size:12px;color:var(--muted);margin-top:6px">O arquivo é baixado no seu aparelho (pasta Downloads, no computador, ou Arquivos, no celular) — depois é só abrir o Google Calendar, ir em Configurações → Importar e exportar → Importar, e escolher esse arquivo.</div>
       </div>
       <div style="margin-top:6px"><a href="/politicadeprivacidade.html" style="font-size:12px;color:var(--muted)">Política de Privacidade</a>
@@ -2311,8 +2343,43 @@
         nx.onclick = () => { closeWizard(); refresh(); };
         n.appendChild(nx);
         sh.appendChild(n);
+        fireConfetti();
       }
     ];
+
+    /* ---------- confete dourado (card "Tudo pronto") ---------- */
+    let confettiLayer = null;
+    function fireConfetti() {
+      try {
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (confettiLayer) { confettiLayer.remove(); confettiLayer = null; }
+        const layer = document.createElement('div');
+        layer.className = 'confetti-layer';
+        document.body.appendChild(layer);
+        confettiLayer = layer;
+        const COUNT = 70;
+        for (let i = 0; i < COUNT; i++) {
+          const p = document.createElement('div');
+          p.className = 'confetti-piece';
+          const size = 6 + Math.random() * 6;
+          const duration = 2600 + Math.random() * 1800;
+          const delay = Math.random() * 500;
+          const drift = Math.round((Math.random() - 0.5) * 140);
+          const rot = Math.round(360 + Math.random() * 720);
+          p.style.left = (Math.random() * 100) + 'vw';
+          p.style.width = size + 'px';
+          p.style.height = (size * 1.6) + 'px';
+          p.style.opacity = (0.55 + Math.random() * 0.45).toFixed(2);
+          if (Math.random() < 0.35) p.style.borderRadius = '50%';
+          p.style.setProperty('--fall-x', drift + 'px');
+          p.style.setProperty('--fall-r', rot + 'deg');
+          p.style.animationDuration = duration + 'ms';
+          p.style.animationDelay = delay + 'ms';
+          layer.appendChild(p);
+        }
+        setTimeout(() => { if (confettiLayer === layer) { layer.remove(); confettiLayer = null; } }, 5200);
+      } catch (e) { }
+    }
 
     function nav(sh, backLabel, nextLabel, guard) {
       const n = document.createElement('div'); n.className = 'nav';
@@ -2498,8 +2565,8 @@
           '<svg width="48" height="48" viewBox="0 -960 960 960" fill="currentColor" style="color:var(--green)" xmlns="http://www.w3.org/2000/svg">' +
           '<path d="m438-338 226-226-58-58-168 168-84-84-58 58 142 142ZM480-80q-139-35-229.5-159.5T160-516v-244l320-120 320 120v244q0 152-90.5 276.5T480-80Z"/>' +
           '</svg></div>' +
-          '<h3>RECEBEMOS SUA APLICAÇÃO!</h3>' +
-          '<div class="lead" style="font-size:20px;color:var(--ink)">Vamos analisar seus dados e avaliar seu acesso ao método. Um consultor vai entrar em contato com você!</div>' +
+          '<h3 style="font-size:clamp(15px, 5vw, 21px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">RECEBEMOS SUA APLICAÇÃO!</h3>' +
+          '<div class="lead" style="font-size:16px;color:var(--ink)">Vamos analisar seus dados e avaliar seu acesso ao método. Um consultor vai entrar em contato com você!</div>' +
           '<div class="ctaopts" style="margin-top:14px"><button type="button" class="btn-whats" id="ctaDoneBtn">' +
           '<svg viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M16.004 3C9.376 3 4 8.373 4 15c0 2.31.638 4.474 1.744 6.32L4 29l7.86-1.7A11.94 11.94 0 0 0 16.004 27C22.63 27 28 21.627 28 15S22.63 3 16.004 3zm0 21.7c-1.98 0-3.83-.55-5.41-1.5l-.386-.23-4.66 1.01 1-4.54-.25-.4A9.65 9.65 0 0 1 5.3 15c0-5.9 4.8-10.7 10.704-10.7C21.9 4.3 26.7 9.1 26.7 15S21.9 24.7 16.004 24.7zm5.9-8.02c-.32-.16-1.9-.94-2.19-1.05-.29-.1-.5-.16-.72.16-.21.32-.82 1.05-1 1.27-.19.21-.37.24-.69.08-.32-.16-1.34-.49-2.55-1.57-.94-.84-1.57-1.87-1.76-2.19-.18-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.19.21-.32.32-.53.11-.21.05-.4-.02-.56-.08-.16-.72-1.73-.98-2.37-.26-.62-.53-.54-.72-.55h-.61c-.21 0-.56.08-.85.4-.29.32-1.11 1.08-1.11 2.63s1.14 3.05 1.3 3.26c.16.21 2.24 3.42 5.43 4.79.76.33 1.35.53 1.81.67.76.24 1.45.21 2 .13.61-.09 1.9-.78 2.17-1.53.27-.75.27-1.4.19-1.53-.08-.13-.29-.21-.61-.37z"/></svg>' +
           'FALAR AGORA COM UM CONSULTOR</button></div>' +
@@ -2524,7 +2591,7 @@
     let ctaAutoShown = false, ctaAutoTimer = null;
     function showAvatarNudge() { if (ctaAutoShown || ctaScrim.classList.contains('open')) return; ctaAutoShown = true; avatarWidget.classList.add('show'); }
     function hideAvatarNudge() { avatarWidget.classList.remove('show'); }
-    function armCtaAuto() { if (ctaAutoShown || ctaAutoTimer) return; ctaAutoTimer = setTimeout(showAvatarNudge, 30000); }
+    function armCtaAuto() { if (ctaAutoShown || ctaAutoTimer) return; ctaAutoTimer = setTimeout(showAvatarNudge, 35000); }
     $('#avatarShowBtn').onclick = () => { hideAvatarNudge(); openCta(); };
     $('#avatarClose').onclick = hideAvatarNudge;
 
