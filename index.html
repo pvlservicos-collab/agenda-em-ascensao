@@ -1931,7 +1931,6 @@
       const arr = activeBlocks(); const i = arr.findIndex(x => x.id === editingId); if (i >= 0) arr.splice(i, 1);
       editorNew = false; closeEditor(); renderCal(); save();
     };
-    edScrim.addEventListener('pointerdown', e => { if (e.target === edScrim) cancelEditor(); });
     $('#edCloseX').onclick = cancelEditor;
   </script>
   <script>
@@ -2501,7 +2500,6 @@
     const icsScrim = $('#icsScrim');
     $('#exportIcs').onclick = () => icsScrim.classList.add('open');
     $('#icsCloseX').onclick = () => icsScrim.classList.remove('open');
-    icsScrim.addEventListener('pointerdown', e => { if (e.target === icsScrim) icsScrim.classList.remove('open'); });
     $('#icsDownloadBtn').onclick = () => { exportarIcs(); icsScrim.classList.remove('open'); };
     let toastT;
     function toast(msg) {
@@ -2516,7 +2514,6 @@
     $('#reset').onclick = () => { cfScrim.classList.add('open'); };
     $('#cfNo').onclick = () => cfScrim.classList.remove('open');
     $('#cfYes').onclick = () => { cfScrim.classList.remove('open'); doReset(); };
-    cfScrim.addEventListener('pointerdown', e => { if (e.target === cfScrim) cfScrim.classList.remove('open'); });
 
     /* ---------- contato / CTA: banner + aplicação em 3 etapas, no mesmo popup ---------- */
     const ctaScrim = $('#ctaScrim'), avatarWidget = $('#avatarWidget');
@@ -2535,9 +2532,9 @@
       nx.onclick = () => { if (guard && !guard()) return; ctaStep++; renderCta(); };
       n.appendChild(nx); sh.appendChild(n);
     }
-    function ctaChoiceStep(field, stepLabel, titulo, opts, errMsg, nextLabel, onDone) {
+    function ctaChoiceStep(field, stepLabel, titulo, opts, errMsg, nextLabel, onDone, titleStyle) {
       return function (sh) {
-        sh.innerHTML = '<div class="step">' + stepLabel + '</div><h3>' + titulo + '</h3>' +
+        sh.innerHTML = '<div class="step">' + stepLabel + '</div><h3' + (titleStyle ? ' style="' + titleStyle + '"' : '') + '>' + titulo + '</h3>' +
           '<div class="field" id="qChoiceWrap"></div>' +
           '<div class="lead" id="ctaErr" style="color:#E69A92;display:none;margin-bottom:0"></div>';
         const rb = () => {
@@ -2564,7 +2561,7 @@
         sh.querySelector('#ctaIntroBtn').onclick = () => { track('cta_form'); ctaStep = 1; renderCta(); };
       },
       ctaChoiceStep('area', '1 DE 3', 'Qual a sua área de atuação profissional?', AREA_OPTS, 'Escolha sua área de atuação.', 'Continuar'),
-      ctaChoiceStep('aumento', '2 DE 3', 'Na sua opinião, em quanto irá AUMENTAR seu faturamento mensal nos próximos 6 meses se VOCÊ alcançar maior eficiência e produtividade na execução das suas atividades?', AUMENTO_OPTS, 'Selecione uma faixa.', 'Continuar'),
+      ctaChoiceStep('aumento', '2 DE 3', 'Na sua opinião, em quanto irá AUMENTAR seu faturamento mensal nos próximos 6 meses se VOCÊ alcançar maior eficiência e produtividade na execução das suas atividades?', AUMENTO_OPTS, 'Selecione uma faixa.', 'Continuar', null, 'font-size:clamp(17px, 4.5vw, 23px)'),
       ctaChoiceStep('investimento', '3 DE 3', 'Quanto você já investiu em imersões, cursos, treinamentos, mentorias e outros programas de desenvolvimento pessoal e profissional no último ano?', INVESTIMENTO_OPTS, 'Selecione uma faixa.', 'Enviar aplicação',
         () => track('cta_form_submit', { area: S.lead.area, aumento: S.lead.aumento, investimento: S.lead.investimento })),
       function ctaDone(sh) {
@@ -2592,7 +2589,6 @@
     function closeCta() { ctaScrim.classList.remove('open'); }
     $('#ctaOpen').onclick = openCta;
     $('#ctaCloseX').onclick = closeCta;
-    ctaScrim.addEventListener('pointerdown', e => { if (e.target === ctaScrim) closeCta(); });
 
     /* avatar com balão: aparece uma vez, após ~30s mexendo na agenda */
     let ctaAutoShown = false, ctaAutoTimer = null;
