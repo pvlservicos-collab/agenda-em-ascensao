@@ -2348,8 +2348,7 @@
     }
     const CTA_STEPS = [
       function ctaIntro(sh) {
-        sh.innerHTML = '<h3>O PRÓXIMO PASSO</h3>' +
-          '<div class="lead" style="font-size:17px;color:var(--ink)">O próximo passo é ter o nosso olhar no seu cenário atual para vermos juntos se e como podemos te ajudar!</div>' +
+        sh.innerHTML = '<div class="lead" style="font-size:17px;color:var(--ink)">O próximo passo é ter o nosso olhar no seu cenário atual para vermos juntos se e como podemos te ajudar!</div>' +
           '<div class="lead" style="font-size:17px;color:var(--ink)">Clique no botão abaixo para agendar sua avaliação conosco.</div>' +
           '<div class="ctaopts" style="margin-top:14px"><button type="button" class="btn gold" id="ctaIntroBtn">Aplicar para a sessão de avaliação</button></div>';
         sh.querySelector('#ctaIntroBtn').onclick = () => { track('cta_form'); ctaStep = 1; renderCta(); };
