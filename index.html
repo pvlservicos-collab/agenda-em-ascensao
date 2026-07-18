@@ -717,63 +717,6 @@
       padding: 12px 14px
     }
 
-    .revwrap .revcard {
-      padding: 9px 0;
-      border-bottom: 1px solid var(--line)
-    }
-
-    .revwrap .revcard:first-child {
-      padding-top: 0
-    }
-
-    .revwrap .revcard:last-child {
-      border-bottom: none
-    }
-
-    .revwrap .revcard>b {
-      display: block;
-      font-size: 11px;
-      color: var(--gold);
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      margin-bottom: 7px
-    }
-
-    .revwrap .field {
-      margin-bottom: 7px
-    }
-
-    .revwrap .field:last-child {
-      margin-bottom: 0
-    }
-
-    .revwrap .field>label {
-      font-size: 11px;
-      margin-bottom: 3px
-    }
-
-    .revwrap .field input[type=text],
-    .revwrap .field input[type=time],
-    .revwrap .field select {
-      padding: 7px 9px;
-      font-size: 13.5px;
-      border-radius: 8px
-    }
-
-    .revwrap .two {
-      gap: 8px
-    }
-
-    .revwrap .chip {
-      padding: 6px 7px;
-      font-size: 12px;
-      min-width: 0
-    }
-
-    .revwrap .tstep button {
-      width: 30px;
-      font-size: 15px
-    }
 
     @media(max-width:480px) {
       .brand {
@@ -910,16 +853,6 @@
     .nav .next.gold {
       background: var(--gold);
       color: #1A1207
-    }
-
-    .nav-sticky {
-      position: sticky;
-      bottom: -22px;
-      margin: 16px -18px -22px;
-      padding: 14px 18px 22px;
-      background: var(--card2);
-      border-top: 1px solid var(--line);
-      border-radius: 0 0 18px 18px
     }
 
     .row {
@@ -1577,6 +1510,14 @@
     function label(min) { min = ((min % 1440) + 1440) % 1440; const h = Math.floor(min / 60), m = min % 60; return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'); }
     function durNice(d) { const h = Math.floor(d / 60), m = d % 60; if (h && m) return h + 'h' + String(m).padStart(2, '0'); if (h) return h + 'h'; return m + 'min'; }
     function esc(s) { return (s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+    function fmtWhats(v) {
+      v = (v || '').replace(/\D/g, '').slice(0, 11);
+      if (v.length > 10) return v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+      if (v.length > 6) return v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+      if (v.length > 2) return v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+      if (v.length > 0) return v.replace(/(\d{0,2})/, '($1');
+      return v;
+    }
     function todayIdx() { return (new Date().getDay() + 6) % 7; }
     function tfield(id, val) { return '<div class="tstep"><button type="button" data-ts="-30" tabindex="-1" aria-label="30 minutos antes">−</button><input type="time" id="' + id + '" step="1800" value="' + val + '"><button type="button" data-ts="30" tabindex="-1" aria-label="30 minutos depois">+</button></div>'; }
     function stepTime(cur, delta) { if (cur % 30 !== 0) return delta > 0 ? Math.ceil(cur / 30) * 30 % 1440 : Math.floor(cur / 30) * 30; return (cur + delta + 1440) % 1440; }
@@ -2194,149 +2135,6 @@
         };
         rba(); rbp(); nav(sh, 'Voltar', 'Continuar');
       },
-      function revisao(sh) {
-        sh.innerHTML = '<div class="step">REVISÃO</div><h3>Revise suas informações</h3>' +
-          '<div class="lead" style="margin-bottom:8px">Suas respostas:</div>' +
-          '<div class="revwrap" id="revList"></div>';
-        const rl = sh.querySelector('#revList');
-        const durOpts5 = [15, 30, 45, 60, 120];
-        const durOptsMeal = [30, 45, 60, 90, 120];
-
-        const cSono = document.createElement('div'); cSono.className = 'revcard';
-        cSono.innerHTML = '<b>Sono</b><div class="two">' +
-          '<div class="field"><label>Vou dormir às</label>' + tfield('rBed', S.a1.bed) + '</div>' +
-          '<div class="field"><label>Acordo às</label>' + tfield('rWake', S.a1.wake) + '</div></div>';
-        rl.appendChild(cSono);
-        cSono.querySelector('#rBed').oninput = e => S.a1.bed = e.target.value;
-        cSono.querySelector('#rWake').oninput = e => S.a1.wake = e.target.value;
-
-        const cTrab = document.createElement('div'); cTrab.className = 'revcard';
-        cTrab.innerHTML = '<b>Trabalho</b><div class="two">' +
-          '<div class="field"><label>Começo às</label>' + tfield('rWs', S.a1.ws) + '</div>' +
-          '<div class="field"><label>Termino às</label>' + tfield('rWe', S.a1.we) + '</div></div>' +
-          '<div class="field"><label>Dias</label><div id="rWd"></div></div>' +
-          '<div class="field"><label>Deslocamento (cada trecho)</label><div id="rCom"></div></div>';
-        rl.appendChild(cTrab);
-        cTrab.querySelector('#rWs').oninput = e => S.a1.ws = e.target.value;
-        cTrab.querySelector('#rWe').oninput = e => S.a1.we = e.target.value;
-        cTrab.querySelector('#rWd').appendChild(dayChips(S.a1.wdays));
-        const comOpts = [0, 15, 30, 45, 60];
-        const rCom = () => {
-          const f = cTrab.querySelector('#rCom'); f.innerHTML = '';
-          f.appendChild(chipRow(comOpts, S.a1.commute, v => { S.a1.commute = v; rCom(); }, v => v === 0 ? 'Trabalho em casa' : durNice(v)));
-        };
-        rCom();
-
-        const cReu = document.createElement('div'); cReu.className = 'revcard';
-        cReu.innerHTML = '<b>Reuniões</b>' +
-          '<div class="field"><label>De manhã</label><div id="rMam"></div></div>' +
-          '<div class="field"><label>À tarde</label><div id="rMpm"></div></div>' +
-          '<div class="field"><label>À noite</label><div id="rMev"></div></div>';
-        rl.appendChild(cReu);
-        const meetOpts = [0, 60, 120, 180, 240, 300];
-        const meetFmt = v => v === 0 ? 'Nenhuma' : durNice(v);
-        const mkMeet = (sel, key) => {
-          const rb = () => {
-            const f = cReu.querySelector(sel); f.innerHTML = '';
-            f.appendChild(chipRow(meetOpts, S.a1[key], v => { S.a1[key] = v; rb(); }, meetFmt));
-          }; rb();
-        };
-        mkMeet('#rMam', 'meetAM'); mkMeet('#rMpm', 'meetPM'); mkMeet('#rMev', 'meetEve');
-
-        const cRef = document.createElement('div'); cRef.className = 'revcard';
-        cRef.innerHTML = '<b>Refeições</b>' +
-          '<div class="two"><div class="field"><label>Café da manhã</label>' + tfield('rBf', S.a1.bfT) + '</div>' +
-          '<div class="field"><label>Duração</label><select id="rBfD">' + durOpts5.map(v => '<option value="' + v + '"' + (v === S.a1.bfD ? ' selected' : '') + '>' + durNice(v) + '</option>').join('') + '</select></div></div>' +
-          '<div class="two"><div class="field"><label>Almoço</label>' + tfield('rLu', S.a1.lunchT) + '</div>' +
-          '<div class="field"><label>Duração</label><select id="rLuD">' + durOptsMeal.map(v => '<option value="' + v + '"' + (v === S.a1.lunchD ? ' selected' : '') + '>' + durNice(v) + '</option>').join('') + '</select></div></div>' +
-          '<div class="two"><div class="field"><label>Jantar</label>' + tfield('rDi', S.a1.dinT) + '</div>' +
-          '<div class="field"><label>Duração</label><select id="rDiD">' + durOptsMeal.map(v => '<option value="' + v + '"' + (v === S.a1.dinD ? ' selected' : '') + '>' + durNice(v) + '</option>').join('') + '</select></div></div>';
-        rl.appendChild(cRef);
-        cRef.querySelector('#rBf').oninput = e => S.a1.bfT = e.target.value;
-        cRef.querySelector('#rBfD').onchange = e => S.a1.bfD = +e.target.value;
-        cRef.querySelector('#rLu').oninput = e => S.a1.lunchT = e.target.value;
-        cRef.querySelector('#rLuD').onchange = e => S.a1.lunchD = +e.target.value;
-        cRef.querySelector('#rDi').oninput = e => S.a1.dinT = e.target.value;
-        cRef.querySelector('#rDiD').onchange = e => S.a1.dinD = +e.target.value;
-
-        const cTrn = document.createElement('div'); cTrn.className = 'revcard';
-        cTrn.innerHTML = '<b>Atividade física</b><div class="field" id="rTr"></div><div id="rTrDet"></div>';
-        rl.appendChild(cTrn);
-        const rbTrn = () => {
-          const f = cTrn.querySelector('#rTr'); f.innerHTML = '';
-          f.appendChild(chipRow([true, false], S.a1.train, v => { S.a1.train = v; rbTrn(); detTrn(); }, v => v ? 'Treino atualmente' : 'Não treino hoje'));
-        };
-        const detTrn = () => {
-          const f = cTrn.querySelector('#rTrDet'); f.innerHTML = '';
-          if (!S.a1.train) return;
-          f.innerHTML = '<div class="field"><label>Dias</label><div id="rTrD"></div></div>' +
-            '<div class="two"><div class="field"><label>Horário</label>' + tfield('rTrT', S.a1.trainT) + '</div>' +
-            '<div class="field"><label>Duração</label><select id="rTrDu">' + durOptsMeal.map(v => '<option value="' + v + '"' + (v === S.a1.trainD ? ' selected' : '') + '>' + durNice(v) + '</option>').join('') + '</select></div></div>' +
-            '<div class="field"><label>Deslocamento</label><div id="rTrC"></div></div>';
-          f.querySelector('#rTrD').appendChild(dayChips(S.a1.trainDays));
-          f.querySelector('#rTrT').oninput = e => S.a1.trainT = e.target.value;
-          f.querySelector('#rTrDu').onchange = e => S.a1.trainD = +e.target.value;
-          const rc = () => {
-            const c = f.querySelector('#rTrC'); c.innerHTML = '';
-            c.appendChild(chipRow([0, 15, 30, 45], S.a1.trainCom, v => { S.a1.trainCom = v; rc(); }, v => v === 0 ? 'Treino em casa' : durNice(v)));
-          };
-          rc();
-        };
-        rbTrn(); detTrn();
-
-        const cPes = document.createElement('div'); cPes.className = 'revcard';
-        cPes.innerHTML = '<b>Pessoas importantes</b><div class="field" id="rPp"></div><div id="rPpDet"></div>';
-        rl.appendChild(cPes);
-        const rbPes = () => {
-          const f = cPes.querySelector('#rPp'); f.innerHTML = '';
-          f.appendChild(chipRow([true, false], S.a1.ppl, v => { S.a1.ppl = v; rbPes(); detPes(); }, v => v ? 'Tenho momentos fixos' : 'Hoje não tenho'));
-        };
-        const durOptsWk = [60, 90, 120, 180, 240, 300];
-        const durOptsWe = [120, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720, 840, 960];
-        const detPes = () => {
-          const f = cPes.querySelector('#rPpDet'); f.innerHTML = '';
-          if (!S.a1.ppl) return;
-          f.innerHTML = '<div class="field"><label>Semana, em quais dias?</label><div id="rPwD"></div></div>' +
-            '<div class="two"><div class="field"><label>A partir de</label>' + tfield('rPwT', S.a1.pplWkT) + '</div>' +
-            '<div class="field"><label>Duração</label><select id="rPwDu">' + durOptsWk.map(v => '<option value="' + v + '"' + (v === S.a1.pplWkD ? ' selected' : '') + '>' + durNice(v) + '</option>').join('') + '</select></div></div>' +
-            '<div class="field" style="margin-top:2px"><label>Fim de semana, em quais dias?</label><div id="rWeD"></div></div>' +
-            '<div class="two"><div class="field"><label>A partir de</label>' + tfield('rWeT', S.a1.pplWeT) + '</div>' +
-            '<div class="field"><label>Duração</label><select id="rWeDu">' + durOptsWe.map(v => '<option value="' + v + '"' + (v === S.a1.pplWeD ? ' selected' : '') + '>' + durNice(v) + '</option>').join('') + '</select></div></div>';
-          f.querySelector('#rPwD').appendChild(dayChips(S.a1.pplWkDays, null, [0, 1, 2, 3, 4]));
-          f.querySelector('#rWeD').appendChild(dayChips(S.a1.pplWeDays, null, [5, 6]));
-          f.querySelector('#rPwT').oninput = e => S.a1.pplWkT = e.target.value;
-          f.querySelector('#rPwDu').onchange = e => S.a1.pplWkD = +e.target.value;
-          f.querySelector('#rWeT').oninput = e => S.a1.pplWeT = e.target.value;
-          f.querySelector('#rWeDu').onchange = e => S.a1.pplWeD = +e.target.value;
-        };
-        rbPes(); detPes();
-
-        const cVaz = document.createElement('div'); cVaz.className = 'revcard';
-        cVaz.innerHTML = '<b>Procrastinação</b>' +
-          '<div class="field"><label>De manhã</label><div id="rVa"></div></div>' +
-          '<div class="field"><label>À tarde</label><div id="rVp"></div></div>';
-        rl.appendChild(cVaz);
-        const rbVa = () => {
-          const f = cVaz.querySelector('#rVa'); f.innerHTML = '';
-          f.appendChild(chipRow(vazOpts, S.a1.vazAM, v => { S.a1.vazAM = v; rbVa(); }, vazFmt));
-        };
-        const rbVp = () => {
-          const f = cVaz.querySelector('#rVp'); f.innerHTML = '';
-          f.appendChild(chipRow(vazOpts, S.a1.vazPM, v => { S.a1.vazPM = v; rbVp(); }, vazFmt));
-        };
-        rbVa(); rbVp();
-        rl.style.paddingBottom = '14px';
-
-        const n = document.createElement('div'); n.className = 'nav nav-sticky';
-        const nx = document.createElement('button'); nx.className = 'next'; nx.textContent = 'Gerar agenda';
-        nx.onclick = () => {
-          S.real = buildReal(S.a1); S.uid = UID; S.phase = 'done';
-          refresh(); save(); track('wizard_complete');
-          S.step++; renderWizard();
-        };
-        n.appendChild(nx);
-        sh.appendChild(n);
-      },
       function pronto(sh) {
         sh.innerHTML = '<div class="step">TUDO PRONTO</div><h3>Sua semana está montada</h3>' +
           '<div class="lead">O que você vê a seguir é um ponto de partida, montado com as suas respostas. Agora é com você deixar do seu jeito:<br><br>' +
@@ -2344,11 +2142,7 @@
           '<b style="color:var(--ink)">Segure e arraste</b> pra mover, ou puxe a base pra mudar a duração.<br>' +
           '<b style="color:var(--ink)">Toque num espaço vazio</b> (ou no botão + Bloco) pra criar algo novo.<br><br>' +
           'Quanto mais completa ficar, mais claro fica o cálculo de horas de cada categoria, e pra onde o seu tempo vai.</div>';
-        const n = document.createElement('div'); n.className = 'nav';
-        const nx = document.createElement('button'); nx.className = 'next'; nx.textContent = 'Ver minha agenda';
-        nx.onclick = () => { closeWizard(); refresh(); };
-        n.appendChild(nx);
-        sh.appendChild(n);
+        nav(sh, null, 'Ver minha agenda');
         fireConfetti();
       }
     ];
@@ -2560,10 +2354,31 @@
           '<div class="ctaopts" style="margin-top:14px"><button type="button" class="btn gold" id="ctaIntroBtn">Aplicar para a sessão de avaliação</button></div>';
         sh.querySelector('#ctaIntroBtn').onclick = () => { track('cta_form'); ctaStep = 1; renderCta(); };
       },
-      ctaChoiceStep('area', '1 DE 3', 'Qual a sua área de atuação profissional?', AREA_OPTS, 'Escolha sua área de atuação.', 'Continuar'),
-      ctaChoiceStep('aumento', '2 DE 3', 'Na sua opinião, em quanto irá AUMENTAR seu faturamento mensal nos próximos 6 meses se VOCÊ alcançar maior eficiência e produtividade na execução das suas atividades?', AUMENTO_OPTS, 'Selecione uma faixa.', 'Continuar', null, 'font-size:clamp(17px, 4.5vw, 23px)'),
-      ctaChoiceStep('investimento', '3 DE 3', 'Quanto você já investiu em imersões, cursos, treinamentos, mentorias e outros programas de desenvolvimento pessoal e profissional no último ano?', INVESTIMENTO_OPTS, 'Selecione uma faixa.', 'Enviar aplicação',
-        () => track('cta_form_submit', { area: S.lead.area, aumento: S.lead.aumento, investimento: S.lead.investimento })),
+      ctaChoiceStep('area', '1 DE 4', 'Qual a sua área de atuação profissional?', AREA_OPTS, 'Escolha sua área de atuação.', 'Continuar'),
+      ctaChoiceStep('aumento', '2 DE 4', 'Na sua opinião, em quanto irá AUMENTAR seu faturamento mensal nos próximos 6 meses se VOCÊ alcançar maior eficiência e produtividade na execução das suas atividades?', AUMENTO_OPTS, 'Selecione uma faixa.', 'Continuar', null, 'font-size:clamp(17px, 4.5vw, 23px)'),
+      ctaChoiceStep('investimento', '3 DE 4', 'Quanto você já investiu em imersões, cursos, treinamentos, mentorias e outros programas de desenvolvimento pessoal e profissional no último ano?', INVESTIMENTO_OPTS, 'Selecione uma faixa.', 'Continuar'),
+      function ctaConfirmDados(sh) {
+        sh.innerHTML = '<div class="step">4 DE 4</div><h3>Confirme seus dados</h3>' +
+          '<div class="lead" style="margin-bottom:8px">Confere se está tudo certo antes de enviar.</div>' +
+          '<div class="field"><label>Nome</label><input type="text" id="cNome" placeholder="Seu nome" value="' + esc(S.lead.nome) + '"></div>' +
+          '<div class="field"><label>WhatsApp</label><input type="tel" inputmode="numeric" id="cWhats" maxlength="16" placeholder="(11) 99999-0000" value="' + esc(fmtWhats(S.lead.whatsapp)) + '"></div>' +
+          '<div class="field"><label>@ do Instagram</label><input type="text" id="cInsta" placeholder="@seu.usuario" value="' + esc(S.lead.instagram || '') + '"></div>' +
+          '<div class="lead" id="ctaErr" style="color:#E69A92;display:none;margin-bottom:0"></div>';
+        const nomeI = sh.querySelector('#cNome'), whatsI = sh.querySelector('#cWhats'), instaI = sh.querySelector('#cInsta');
+        nomeI.oninput = () => S.lead.nome = nomeI.value;
+        instaI.oninput = () => S.lead.instagram = instaI.value;
+        whatsI.oninput = () => { whatsI.value = fmtWhats(whatsI.value); S.lead.whatsapp = whatsI.value; };
+        navCta(sh, null, 'Enviar aplicação', () => {
+          const nome = nomeI.value.trim();
+          const digits = whatsI.value.replace(/\D/g, '');
+          const err = sh.querySelector('#ctaErr');
+          if (!nome || digits.length < 10) { err.textContent = 'Preencha nome e um WhatsApp válido.'; err.style.display = 'block'; return false; }
+          S.lead.nome = nome; S.lead.whatsapp = digits; S.lead.instagram = instaI.value.trim();
+          save();
+          track('cta_form_submit', { area: S.lead.area, aumento: S.lead.aumento, investimento: S.lead.investimento });
+          return true;
+        });
+      },
       function ctaDone(sh) {
         sh.innerHTML = '<div style="margin-bottom:8px">' +
           '<svg width="48" height="48" viewBox="0 -960 960 960" fill="currentColor" style="color:var(--green)" xmlns="http://www.w3.org/2000/svg">' +
@@ -2581,8 +2396,10 @@
     function renderCta() {
       const sh = $('#ctaSheet'); sh.innerHTML = '';
       const wrap = $('#ctaProgressWrap'), bar = $('#ctaProgressBar');
-      if (ctaStep >= 1 && ctaStep <= 3) { wrap.style.display = ''; bar.style.width = (ctaStep === 1 ? '33%' : ctaStep === 2 ? '66%' : '100%'); }
-      else wrap.style.display = 'none';
+      if (ctaStep >= 1 && ctaStep <= 4) {
+        wrap.style.display = '';
+        bar.style.width = (ctaStep === 1 ? '25%' : ctaStep === 2 ? '50%' : ctaStep === 3 ? '75%' : '100%');
+      } else wrap.style.display = 'none';
       CTA_STEPS[ctaStep](sh);
     }
     function openCta() { ctaStep = 0; ctaScrim.classList.add('open'); hideAvatarNudge(); renderCta(); }
