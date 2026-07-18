@@ -39,3 +39,9 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   contagem      INT NOT NULL DEFAULT 1,
   janela_inicio TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- IPs ignorados nas métricas (ex.: o próprio admin testando o site) — api/track.js pula esses
+CREATE TABLE IF NOT EXISTS ignored_ips (
+  ip        TEXT PRIMARY KEY,
+  criado_em TIMESTAMPTZ NOT NULL DEFAULT now()
+);

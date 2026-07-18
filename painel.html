@@ -76,6 +76,22 @@ nav a.active{background:var(--field);color:var(--gold);font-weight:600}
 .chart-box h3{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:14px;font-family:'Inter'}
 .chart-box canvas{max-height:230px}
 
+.stepbar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:12.5px}
+.stepbar-row:last-child{margin-bottom:0}
+.stepbar-row .lbl{flex:0 0 150px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stepbar-row .track{flex:1;height:18px;background:var(--field);border-radius:6px;overflow:hidden}
+.stepbar-row .fill{height:100%;background:var(--gold);border-radius:6px;transition:width .3s ease}
+.stepbar-row .n{flex:0 0 34px;text-align:right;font-weight:600}
+
+.ip-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ip-row:last-child{border-bottom:none}
+.ip-row .ip-val{flex:1;font-family:monospace}
+.ip-row button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px}
+.ip-row button:hover{color:var(--red)}
+.btn-ignore-mine{padding:8px 14px;background:var(--gold);border:none;border-radius:9px;font:inherit;
+  font-size:13px;font-weight:600;color:#1A1207;cursor:pointer}
+.btn-ignore-mine:disabled{opacity:.5;cursor:not-allowed}
+
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
 .toolbar input{flex:1;min-width:200px;padding:9px 12px;background:var(--field);border:1px solid var(--line);
   border-radius:9px;font:inherit;font-size:14px;color:var(--ink)}
@@ -99,6 +115,9 @@ tbody tr:last-child td{border-bottom:none}
 tbody tr:hover{background:var(--field)}
 .wa-link{color:var(--green);text-decoration:none;font-weight:600}
 .wa-link:hover{text-decoration:underline}
+.btn-del-lead{background:none;border:none;cursor:pointer;font-size:14px;padding:2px 4px;border-radius:6px;opacity:.7}
+.btn-del-lead:hover{opacity:1;background:var(--field)}
+.btn-del-lead:disabled{opacity:.3;cursor:not-allowed}
 .empty-msg{padding:30px;text-align:center;color:var(--muted);font-size:13px}
 .pager{display:flex;justify-content:center;gap:10px;margin-top:14px;align-items:center;font-size:13px;color:var(--muted)}
 .pager button{padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);
@@ -177,6 +196,23 @@ tbody tr:hover{background:var(--field)}
         <h3>Evolução diária</h3>
         <canvas id="chartFunil"></canvas>
       </div>
+      <div class="chart-box">
+        <h3>Onde as pessoas param — Montagem da agenda</h3>
+        <div id="stepFunnelWizard"></div>
+      </div>
+      <div class="chart-box">
+        <h3>Onde as pessoas param — Aplicação</h3>
+        <div id="stepFunnelCta"></div>
+      </div>
+      <div class="chart-box">
+        <h3>Ignorar meus testes nas métricas</h3>
+        <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px">IPs na lista abaixo não contam em visitas, funil ou etapas — os leads que você criar testando ainda aparecem na aba Leads, é só excluir manualmente.</p>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--muted)">Seu IP agora: <b id="meuIp" style="color:var(--ink);font-family:monospace">—</b></span>
+          <button type="button" class="btn-ignore-mine" id="btnIgnoreMine" onclick="ignorarMeuIp()">Ignorar meu IP</button>
+        </div>
+        <div id="ignoredIpsList"></div>
+      </div>
     </div>
 
     <!-- LEADS -->
@@ -197,7 +233,7 @@ tbody tr:hover{background:var(--field)}
             <th class="priority">Área de atuação</th><th class="priority">Aumento esperado (6m)</th><th class="priority">Já investiu</th>
             <th>Sono</th><th>Trabalho</th><th>Deslocamento</th><th>Reuniões</th>
             <th>Café da manhã</th><th>Almoço</th><th>Jantar</th><th>Treino</th>
-            <th>Pessoas importantes</th><th>Procrastinação</th>
+            <th>Pessoas importantes</th><th>Procrastinação</th><th></th>
           </tr></thead>
           <tbody id="leadsBody"></tbody>
         </table>
@@ -251,6 +287,8 @@ function mostrarPainel(){
   document.getElementById('screen-login').style.display='none';
   document.getElementById('screen-painel').style.display='block';
   carregarFunil();
+  carregarStepFunnel();
+  carregarIgnoredIps();
   carregarLeads();
 }
 
@@ -264,6 +302,7 @@ document.getElementById('periodFilter').addEventListener('click',e=>{
   periodoAtual=b.dataset.period;
   document.querySelectorAll('#periodFilter button').forEach(x=>x.classList.toggle('active',x===b));
   carregarFunil();
+  carregarStepFunnel();
 });
 
 async function carregarFunil(){
@@ -295,6 +334,69 @@ function desenharGrafico(serie){
   };
   if(chart){chart.data=cfg.data;chart.update();}
   else chart=new Chart(ctx,cfg);
+}
+
+const WIZARD_STEP_LABELS={dados:'Nome, WhatsApp e Instagram',sono:'Sono',trabalho:'Trabalho',reunioes:'Reuniões',
+  refeicoes:'Refeições',treino:'Atividade física',pessoas:'Pessoas importantes',procrastinacao:'Procrastinação',pronto:'Agenda pronta'};
+const CTA_STEP_LABELS={intro:'Introdução',area:'Área de atuação',aumento:'Aumento esperado',
+  investimento:'Investimento',confirmacao:'Confirmação de dados',concluido:'Aplicação enviada'};
+
+function renderStepFunnel(containerId,steps,labels){
+  const el=document.getElementById(containerId);
+  if(!steps.length){el.innerHTML='<p style="font-size:12.5px;color:var(--muted)">Sem dados no período.</p>';return;}
+  const max=steps[0].n||1;
+  el.innerHTML=steps.map(s=>{
+    const pct=max?Math.round((s.n/max)*100):0;
+    const label=labels[s.step]||s.step;
+    return '<div class="stepbar-row"><div class="lbl">'+esc(label)+'</div>'+
+      '<div class="track"><div class="fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="n">'+s.n+'</div></div>';
+  }).join('');
+}
+
+async function carregarStepFunnel(){
+  try{
+    const d=await api('/api/admin/step-funnel?period='+periodoAtual);
+    const wizardSteps=d.steps.filter(s=>s.funnel==='wizard').sort((a,b)=>a.step_index-b.step_index);
+    const ctaSteps=d.steps.filter(s=>s.funnel==='cta').sort((a,b)=>a.step_index-b.step_index);
+    renderStepFunnel('stepFunnelWizard',wizardSteps,WIZARD_STEP_LABELS);
+    renderStepFunnel('stepFunnelCta',ctaSteps,CTA_STEP_LABELS);
+  }catch(e){
+    if(String(e.message).includes('autenticado')) return logout();
+  }
+}
+
+async function carregarIgnoredIps(){
+  try{
+    const d=await api('/api/admin/ignored-ips');
+    document.getElementById('meuIp').textContent=d.mine;
+    const btn=document.getElementById('btnIgnoreMine');
+    const jaIgnorado=d.ignored.includes(d.mine);
+    btn.disabled=jaIgnorado;
+    btn.textContent=jaIgnorado?'Seu IP já está ignorado':'Ignorar meu IP';
+    const list=document.getElementById('ignoredIpsList');
+    if(!d.ignored.length){list.innerHTML='<p style="font-size:12.5px;color:var(--muted)">Nenhum IP ignorado ainda.</p>';return;}
+    list.innerHTML=d.ignored.map(ip=>
+      '<div class="ip-row"><span class="ip-val">'+esc(ip)+'</span>'+
+      '<button type="button" onclick="removerIpIgnorado(\''+esc(ip)+'\')" title="Remover">✕</button></div>'
+    ).join('');
+  }catch(e){
+    if(String(e.message).includes('autenticado')) return logout();
+  }
+}
+
+async function ignorarMeuIp(){
+  try{
+    await api('/api/admin/ignored-ips',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
+    carregarIgnoredIps();
+  }catch(e){alert('Erro: '+e.message);}
+}
+
+async function removerIpIgnorado(ip){
+  try{
+    await api('/api/admin/ignored-ips?ip='+encodeURIComponent(ip),{method:'DELETE'});
+    carregarIgnoredIps();
+  }catch(e){alert('Erro: '+e.message);}
 }
 
 let searchTimer;
@@ -353,7 +455,8 @@ async function carregarLeads(){
         '<td>'+esc(fmtRefeicao(a1.dinT,a1.dinD))+'</td>'+
         '<td>'+esc(fmtTreino(a1))+'</td>'+
         '<td>'+esc(fmtPessoas(a1))+'</td>'+
-        '<td>'+esc(fmtProcrastinacao(a1))+'</td>';
+        '<td>'+esc(fmtProcrastinacao(a1))+'</td>'+
+        '<td><button type="button" class="btn-del-lead" data-id="'+l.id+'" title="Excluir lead">🗑</button></td>';
       body.appendChild(tr);
     });
     const totalPaginas=Math.max(1,Math.ceil(totalLeads/20));
@@ -369,6 +472,19 @@ function mudarPagina(delta){
   paginaAtual=Math.max(1,paginaAtual+delta);
   carregarLeads();
 }
+
+document.getElementById('leadsBody').addEventListener('click',async e=>{
+  const b=e.target.closest('.btn-del-lead');if(!b)return;
+  if(!confirm('Excluir esse lead e os eventos ligados a ele? Não dá pra desfazer.'))return;
+  b.disabled=true;
+  try{
+    await api('/api/admin/leads?id='+b.dataset.id,{method:'DELETE'});
+    carregarLeads();
+  }catch(e){
+    alert('Erro ao excluir: '+e.message);
+    b.disabled=false;
+  }
+});
 
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function formatarFone(digits){

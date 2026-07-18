@@ -1562,6 +1562,16 @@
         }).catch(() => { });
       } catch (e) { }
     }
+    /* ---------- funil por etapa: onde a pessoa para no quiz e no popup ---------- */
+    const WIZARD_STEP_KEYS = ['dados', 'sono', 'trabalho', 'reunioes', 'refeicoes', 'treino', 'pessoas', 'procrastinacao', 'pronto'];
+    const CTA_STEP_KEYS = ['intro', 'area', 'aumento', 'investimento', 'confirmacao', 'concluido'];
+    const stepsSeen = new Set();
+    function trackStepView(funnel, keys, index) {
+      const dedupeKey = funnel + ':' + index;
+      if (stepsSeen.has(dedupeKey)) return;
+      stepsSeen.add(dedupeKey);
+      track('step_view', { funnel: funnel, step: keys[index] || String(index), step_index: index });
+    }
     let syncTimer;
     function syncToServer() {
       if (!S.lead || !S.lead.whatsapp || S.lead.whatsapp.replace(/\D/g, '').length < 10) return;
@@ -2229,6 +2239,7 @@
       const pct = Math.round(S.step / (W1.length - 1) * 100);
       const bar = document.getElementById('wProgressBar');
       if (bar) bar.style.width = pct + '%';
+      trackStepView('wizard', WIZARD_STEP_KEYS, S.step);
     }
     function openWizard() { wScrim.classList.add('open'); renderWizard(); if (TEST_MODE) testBar.style.display = 'flex'; }
     function closeWizard() { wScrim.classList.remove('open'); if (TEST_MODE) testBar.style.display = 'none'; }
@@ -2400,6 +2411,7 @@
         bar.style.width = (ctaStep === 1 ? '25%' : ctaStep === 2 ? '50%' : ctaStep === 3 ? '75%' : '100%');
       } else wrap.style.display = 'none';
       CTA_STEPS[ctaStep](sh);
+      trackStepView('cta', CTA_STEP_KEYS, ctaStep);
     }
     function openCta() { ctaStep = 0; ctaScrim.classList.add('open'); hideAvatarNudge(); renderCta(); }
     function closeCta() { ctaScrim.classList.remove('open'); }

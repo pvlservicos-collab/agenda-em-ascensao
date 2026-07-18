@@ -1,7 +1,7 @@
 const { sql, ensureSchema, normalizeFone } = require('../lib/db');
-const { rateLimited } = require('../lib/rateLimit');
+const { rateLimited, isIgnoredIp } = require('../lib/rateLimit');
 
-const EVENTOS_VALIDOS = new Set(['site_view', 'wizard_complete', 'cta_diag', 'cta_form', 'cta_form_submit', 'cta_consultor', 'cta_insta', 'export_ics']);
+const EVENTOS_VALIDOS = new Set(['site_view', 'wizard_complete', 'cta_diag', 'cta_form', 'cta_form_submit', 'cta_consultor', 'cta_insta', 'export_ics', 'step_view']);
 const EXTRAS_MAX_CHARS = 5000;
 
 module.exports = async function handler(req, res) {
@@ -12,6 +12,7 @@ module.exports = async function handler(req, res) {
 
   await ensureSchema();
   if (await rateLimited(req, res, { scope: 'track', limit: 120, windowMs: 5 * 60 * 1000 })) return;
+  if (await isIgnoredIp(req)) return res.status(200).json({ ok: true, ignored: true });
 
   const body = req.body || {};
   const tipo = String(body.event || '');
