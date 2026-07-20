@@ -1369,7 +1369,7 @@
       </div>
       <div style="margin-top:6px">
         <button class="btn" id="exportIcs" style="text-align:left;line-height:1.35">📅 Exportar a agenda no formato .ics para importar no Google Calendar</button>
-        <div style="font-size:12px;color:var(--muted);margin-top:6px">O arquivo é baixado no seu aparelho (pasta Downloads, no computador, ou Arquivos, no celular) — depois é só abrir o Google Calendar, ir em Configurações → Importar e exportar → Importar, e escolher esse arquivo.</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px">A importação só funciona pelo computador (o app do Google Calendar no celular não importa arquivo) — o passo a passo completo aparece ao clicar no botão.</div>
       </div>
       <div style="margin-top:6px"><a href="/politicadeprivacidade.html" style="font-size:12px;color:var(--muted)">Política de Privacidade</a>
         · <a href="/exclusao-dados.html" style="font-size:12px;color:var(--muted)">Solicitar
@@ -1456,12 +1456,13 @@
     <div class="sheet" style="max-width:440px">
       <button type="button" class="sheet-x" id="icsCloseX" aria-label="Fechar">✕</button>
       <h3>Como importar sua agenda no Google Calendar</h3>
-      <div class="lead">Siga o passo a passo — leva menos de 1 minuto.</div>
+      <div class="lead" style="background:rgba(201,151,70,.12);border:1px solid var(--gold);border-radius:10px;padding:10px 12px;color:var(--ink);font-size:13px;margin-bottom:14px">⚠️ Isso só funciona pelo <b>computador</b> (navegador). O app do Google Calendar no celular não tem a opção de importar arquivo — se você está no celular, veja o passo 2 abaixo.</div>
       <ol style="padding-left:20px;color:var(--ink);font-size:14px;line-height:1.9;margin-bottom:16px">
-        <li>Clique em <b>"Baixar arquivo .ics"</b> abaixo. O arquivo cai na pasta <b>Downloads</b> (computador) ou <b>Arquivos</b> (celular).</li>
-        <li>Abra o <b>Google Calendar</b> (google.com/calendar ou o app).</li>
-        <li>Vá em <b>Configurações → Importar e exportar → Importar</b>.</li>
-        <li>Selecione o arquivo baixado. Pronto — sua agenda entra automaticamente, se repetindo toda semana.</li>
+        <li>Clique em <b>"Baixar arquivo .ics"</b> abaixo pra baixar o arquivo.</li>
+        <li>Está no celular? Envie o arquivo pra você mesmo (WhatsApp, e-mail ou Google Drive) e abra ele no computador depois. Está no computador? Só seguir pro próximo passo.</li>
+        <li>No computador, abra <b>calendar.google.com</b> e clique na engrenagem ⚙ de <b>Configurações</b>, no canto superior direito.</li>
+        <li>No menu à esquerda, clique em <b>Importar e exportar</b>.</li>
+        <li>Clique em <b>Selecionar arquivo do computador</b>, escolha o arquivo baixado, a agenda de destino, e depois em <b>Importar</b>. Pronto — os horários entram automaticamente, se repetindo toda semana.</li>
       </ol>
       <button type="button" class="btn gold" id="icsDownloadBtn" style="width:100%;justify-content:center">⬇ Baixar arquivo .ics</button>
     </div>
@@ -2272,13 +2273,16 @@
     function icsDT(date) {
       return date.getFullYear() + pad2(date.getMonth() + 1) + pad2(date.getDate()) + 'T' + pad2(date.getHours()) + pad2(date.getMinutes()) + '00';
     }
+    function icsUTC(date) {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    }
     function icsEscape(s) {
       return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
     }
     function exportarIcs() {
       if (!S.real.length) { toast('Monte sua agenda primeiro.'); return; }
       const monday = segundaDestaSemana();
-      const stamp = icsDT(new Date());
+      const stamp = icsUTC(new Date());
       const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Ascensao Tita//Agenda em Ascensao//PT', 'CALSCALE:GREGORIAN'];
       S.real.forEach(b => {
         const start = new Date(monday); start.setDate(monday.getDate() + b.day); start.setMinutes(start.getMinutes() + b.s);
