@@ -1,7 +1,7 @@
 const { sql, ensureSchema, normalizeFone } = require('../lib/db');
 const { rateLimited, isIgnoredIp } = require('../lib/rateLimit');
 
-const EVENTOS_VALIDOS = new Set(['site_view', 'wizard_complete', 'cta_diag', 'cta_form', 'cta_form_submit', 'cta_consultor', 'cta_insta', 'export_ics', 'step_view']);
+const EVENTOS_VALIDOS = new Set(['site_view', 'wizard_complete', 'cta_diag', 'cta_form', 'cta_form_submit', 'cta_consultor', 'cta_insta', 'export_ics', 'export_csv', 'step_view']);
 const EXTRAS_MAX_CHARS = 5000;
 
 module.exports = async function handler(req, res) {

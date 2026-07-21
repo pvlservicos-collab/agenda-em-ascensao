@@ -1368,7 +1368,7 @@
         <button class="reset" id="reset">Recomeçar do zero</button>
       </div>
       <div style="margin-top:6px">
-        <button class="btn" id="exportIcs" style="text-align:left;line-height:1.35">📅 Exportar a agenda no formato .ics para importar no Google Calendar</button>
+        <button class="btn" id="exportIcs" style="text-align:left;line-height:1.35">📅 Exportar a agenda no formato .csv para importar no Google Calendar</button>
         <div style="font-size:12px;color:var(--muted);margin-top:6px">A importação só funciona pelo computador (o app do Google Calendar no celular não importa arquivo) — o passo a passo completo aparece ao clicar no botão.</div>
       </div>
       <div style="margin-top:6px"><a href="/politicadeprivacidade.html" style="font-size:12px;color:var(--muted)">Política de Privacidade</a>
@@ -1458,14 +1458,15 @@
       <h3>Como importar sua agenda no Google Calendar</h3>
       <div id="icsWebviewWarn" style="display:none;background:rgba(201,107,98,.15);border:1px solid var(--red);border-radius:10px;padding:10px 12px;color:var(--ink);font-size:13px;margin-bottom:10px">🚫 Você está num navegador dentro de outro app (WhatsApp/Instagram) — o download não funciona bem aqui. Toque nos <b>⋮</b> (três pontinhos, geralmente no canto superior) e escolha <b>"Abrir no navegador"</b> (Chrome/Safari) antes de baixar.</div>
       <div class="lead" style="background:rgba(201,151,70,.12);border:1px solid var(--gold);border-radius:10px;padding:10px 12px;color:var(--ink);font-size:13px;margin-bottom:14px">⚠️ Isso só funciona pelo <b>computador</b> (navegador). O app do Google Calendar no celular não tem a opção de importar arquivo — se você está no celular, veja o passo 2 abaixo.</div>
-      <ol style="padding-left:20px;color:var(--ink);font-size:14px;line-height:1.9;margin-bottom:16px">
-        <li>Clique em <b>"Baixar arquivo .ics"</b> abaixo pra baixar o arquivo.</li>
+      <ol style="padding-left:20px;color:var(--ink);font-size:14px;line-height:1.9;margin-bottom:10px">
+        <li>Clique em <b>"Baixar arquivo .csv"</b> abaixo pra baixar o arquivo.</li>
         <li>Está no celular? Envie o arquivo pra você mesmo (WhatsApp, e-mail ou Google Drive) e abra ele no computador depois. Está no computador? Só seguir pro próximo passo.</li>
         <li>No computador, abra <b>calendar.google.com</b> e clique na engrenagem ⚙ de <b>Configurações</b>, no canto superior direito.</li>
         <li>No menu à esquerda, clique em <b>Importar e exportar</b>.</li>
-        <li>Clique em <b>Selecionar arquivo do computador</b>, escolha o arquivo baixado, a agenda de destino, e depois em <b>Importar</b>. Pronto — os horários entram automaticamente, se repetindo toda semana.</li>
+        <li>Clique em <b>Selecionar arquivo do computador</b>, escolha o arquivo baixado, a agenda de destino, e depois em <b>Importar</b>. Pronto — os horários das próximas 8 semanas entram automaticamente.</li>
       </ol>
-      <button type="button" class="btn gold" id="icsDownloadBtn" style="width:100%;justify-content:center">⬇ Baixar arquivo .ics</button>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Esse formato importa os horários das próximas 8 semanas como eventos individuais (não como uma série que se repete pra sempre). Depois desse período, basta baixar e importar de novo.</div>
+      <button type="button" class="btn gold" id="icsDownloadBtn" style="width:100%;justify-content:center">⬇ Baixar arquivo .csv</button>
     </div>
   </div>
 
@@ -1641,11 +1642,15 @@
       bs.forEach(b => { const el = makeBlock(b); if (el) wgrid.appendChild(el); });
     }
     function syncFrozen() {
-      const x = scrollx.scrollLeft, y = scrollx.scrollTop;
+      const x = scrollx.scrollLeft;
+      const calBox = scrollx.getBoundingClientRect();
+      const maxY = Math.max(0, (inner.offsetHeight || 0) - HEADER_H);
+      const y = Math.min(maxY, Math.max(0, -calBox.top));
       dayhead.style.transform = 'translateY(' + y + 'px)';
       gutter.style.transform = 'translateX(' + x + 'px)';
       corner.style.transform = 'translate(' + x + 'px,' + y + 'px)';
     }
+    (function loopFrozen() { syncFrozen(); requestAnimationFrame(loopFrozen); })();
     function layoutDay(blocks) {
       blocks.forEach(b => { b._col = 0; b._cols = 1; b._split = false; });
       const evs = blocks.slice().sort((a, b) => a.s - b.s || (b.d - a.d));
@@ -1759,7 +1764,6 @@
       box.appendChild(pf);
     }
     function renderCal() { computeEnd(activeBlocks()); computeCol(); renderHead(); renderGutter(); renderGrid(); renderSummary(); syncFrozen(); }
-    scrollx.addEventListener('scroll', syncFrozen, { passive: true });
     wgrid.addEventListener('click', e => {
       if (e.target.closest('.block')) return;
       const rect = wgrid.getBoundingClientRect();
@@ -2271,60 +2275,47 @@
       d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - dow);
       return d;
     }
-    function icsUTC(date) {
-      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    }
-    function icsEscape(s) {
-      return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
-    }
-    function icsFoldLine(line) {
-      // RFC 5545: linhas de conteúdo devem ter no máx. 75 octets; acima disso, dobra com CRLF + espaço
-      const bytes = s => new TextEncoder().encode(s).length;
-      if (bytes(line) <= 75) return line;
-      const out = [];
-      let cur = line;
-      while (bytes(cur) > 75) {
-        let cut = 74;
-        while (cut > 0 && bytes(cur.slice(0, cut)) > 74) cut--;
-        out.push(cur.slice(0, cut));
-        cur = ' ' + cur.slice(cut);
-      }
-      out.push(cur);
-      return out.join('\r\n');
-    }
     function isInAppBrowser() {
       const ua = navigator.userAgent || '';
       return /Instagram|FBAN|FBAV|WhatsApp|Line\/|MicroMessenger|TikTok/i.test(ua);
     }
-    function gerarIcsTexto() {
+    function fmtDateUS(date) {
+      return pad2(date.getMonth() + 1) + '/' + pad2(date.getDate()) + '/' + date.getFullYear();
+    }
+    function fmtTimeUS(date) {
+      let h = date.getHours(); const m = date.getMinutes();
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12; if (h === 0) h = 12;
+      return h + ':' + pad2(m) + ' ' + ampm;
+    }
+    function csvEscape(s) {
+      s = String(s == null ? '' : s);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+    const CSV_SEMANAS = 8; // Google Calendar CSV não suporta recorrência: geramos N semanas de ocorrências individuais
+    function gerarCsvTexto() {
       const monday = segundaDestaSemana();
-      const stamp = icsUTC(new Date());
-      const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Ascensao Tita//Agenda em Ascensao//PT', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
-      S.real.forEach(b => {
-        const start = new Date(monday); start.setDate(monday.getDate() + b.day); start.setMinutes(start.getMinutes() + b.s);
-        const end = new Date(start); end.setMinutes(end.getMinutes() + b.d);
-        lines.push('BEGIN:VEVENT');
-        lines.push('UID:agenda-' + b.id + '-' + S.uid + '@ascensaotita.com.br');
-        lines.push('DTSTAMP:' + stamp);
-        lines.push('DTSTART:' + icsUTC(start));
-        lines.push('DTEND:' + icsUTC(end));
-        lines.push('RRULE:FREQ=WEEKLY');
-        lines.push('SEQUENCE:0');
-        lines.push('STATUS:CONFIRMED');
-        lines.push('SUMMARY:' + icsEscape(b.t));
-        lines.push('END:VEVENT');
-      });
-      lines.push('END:VCALENDAR');
-      return lines.map(icsFoldLine).join('\r\n') + '\r\n';
+      const linhas = [['Subject', 'Start Date', 'Start Time', 'End Date', 'End Time', 'All Day Event', 'Description', 'Location', 'Private']];
+      for (let semana = 0; semana < CSV_SEMANAS; semana++) {
+        S.real.forEach(b => {
+          const start = new Date(monday);
+          start.setDate(start.getDate() + b.day + semana * 7);
+          start.setMinutes(start.getMinutes() + b.s);
+          const end = new Date(start);
+          end.setMinutes(end.getMinutes() + b.d);
+          linhas.push([b.t, fmtDateUS(start), fmtTimeUS(start), fmtDateUS(end), fmtTimeUS(end), 'False', '', '', 'False']);
+        });
+      }
+      return '﻿' + linhas.map(row => row.map(csvEscape).join(',')).join('\r\n') + '\r\n';
     }
     function exportarIcs() {
       if (!S.real.length) { toast('Monte sua agenda primeiro.'); return; }
-      const texto = gerarIcsTexto();
-      const dataUri = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(texto);
+      const texto = gerarCsvTexto();
+      const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(texto);
       const a = document.createElement('a');
-      a.href = dataUri; a.download = 'minha-agenda-ascensao-tita.ics'; a.rel = 'noopener';
+      a.href = dataUri; a.download = 'minha-agenda-ascensao-tita.csv'; a.rel = 'noopener';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      track('export_ics');
+      track('export_csv');
       toast('Baixado! Agora é só importar no Google Calendar (Configurações → Importar).');
     }
     const icsScrim = $('#icsScrim');
