@@ -2201,7 +2201,7 @@
       nx.onclick = () => {
         if (guard && !guard()) return;
         if (S.step < W1.length - 1) { S.step++; renderWizard(); save(); }
-        else { S.real = buildReal(S.a1); S.uid = UID; S.phase = 'done'; closeWizard(); refresh(); save(); track('wizard_complete'); }
+        else { S.real = buildReal(S.a1); S.uid = UID; S.phase = 'done'; closeWizard(); refresh(); save(); track('wizard_complete'); armCtaAuto(); }
       };
       n.appendChild(nx); sh.appendChild(n);
     }
@@ -2260,7 +2260,6 @@
       const hasReal = S.real.length > 0;
       $('#ctarow').style.display = hasReal ? 'flex' : 'none';
       $('#exportIcs').style.display = hasReal ? '' : 'none';
-      if (hasReal) armCtaAuto();
       renderCal();
     }
     function pad2(n) { return String(n).padStart(2, '0'); }
@@ -2435,7 +2434,7 @@
     let ctaAutoShown = false, ctaAutoTimer = null;
     function showAvatarNudge() { if (ctaAutoShown || ctaScrim.classList.contains('open')) return; ctaAutoShown = true; avatarWidget.classList.add('show'); }
     function hideAvatarNudge() { avatarWidget.classList.remove('show'); }
-    function armCtaAuto() { if (ctaAutoShown || ctaAutoTimer) return; ctaAutoTimer = setTimeout(showAvatarNudge, 35000); }
+    function armCtaAuto() { if (ctaAutoShown || ctaAutoTimer) return; ctaAutoTimer = setTimeout(showAvatarNudge, 40000); }
     $('#avatarShowBtn').onclick = () => { hideAvatarNudge(); openCta(); };
     $('#avatarClose').onclick = hideAvatarNudge;
 
