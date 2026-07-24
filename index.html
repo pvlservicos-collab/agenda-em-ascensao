@@ -279,29 +279,31 @@
 
     .calcontent {
       position: relative;
+      display: grid;
       padding-bottom: 64px
     }
 
     .corner {
-      position: absolute;
+      position: sticky;
       top: 0;
       left: 0;
+      grid-column: 1;
+      grid-row: 1;
       z-index: 100;
       background: var(--card);
       border-bottom: 1px solid var(--line);
-      border-right: 1px solid var(--line);
-      will-change: transform
+      border-right: 1px solid var(--line)
     }
 
     .dayhead {
-      position: absolute;
+      position: sticky;
       top: 0;
-      left: 0;
+      grid-column: 1 / 3;
+      grid-row: 1;
       z-index: 90;
       display: flex;
       background: var(--card);
-      border-bottom: 1px solid var(--line);
-      will-change: transform
+      border-bottom: 1px solid var(--line)
     }
 
     .dayhead .gut {
@@ -333,12 +335,13 @@
     }
 
     .gutter {
-      position: absolute;
+      position: sticky;
       left: 0;
+      grid-column: 1;
+      grid-row: 2;
       z-index: 80;
       background: var(--card);
-      border-right: 1px solid var(--line);
-      will-change: transform
+      border-right: 1px solid var(--line)
     }
 
     .gutter .hlabel {
@@ -351,7 +354,9 @@
     }
 
     .wgrid {
-      position: absolute
+      position: relative;
+      grid-column: 2;
+      grid-row: 2
     }
 
     .hour {
@@ -1609,17 +1614,14 @@
 
     /* ---------- calendar render ---------- */
     let col = 120;
-    let calvpTop = 0;
-    function updateCalvpTop() { calvpTop = scrollx.getBoundingClientRect().top + window.scrollY; }
     function computeCol() {
       const W = scrollx.clientWidth || 360, avail = W - GUT, seven = avail / 7;
       col = seven >= 100 ? seven : avail / 3.5;   // cabe 7 (largo) ou mostra 3,5 dias (celular vertical)
-      const gridH = (END - START) * PX, contentW = GUT + col * 7;
-      inner.style.width = contentW + 'px'; inner.style.height = (HEADER_H + gridH) + 'px';
-      corner.style.width = GUT + 'px'; corner.style.height = HEADER_H + 'px';
-      dayhead.style.width = contentW + 'px'; dayhead.style.height = HEADER_H + 'px';
-      gutter.style.top = HEADER_H + 'px'; gutter.style.width = GUT + 'px'; gutter.style.height = gridH + 'px';
-      wgrid.style.top = HEADER_H + 'px'; wgrid.style.left = GUT + 'px'; wgrid.style.width = (col * 7) + 'px'; wgrid.style.height = gridH + 'px';
+      const gridH = (END - START) * PX;
+      // grid nativo: dayhead/gutter/corner ficam "sticky" de verdade (sem JS por frame), cabeçalho e coluna
+      // de horas se ajustam automaticamente ao tamanho das trilhas
+      inner.style.gridTemplateColumns = GUT + 'px ' + (col * 7) + 'px';
+      inner.style.gridTemplateRows = HEADER_H + 'px ' + gridH + 'px';
     }
     function clipRect(s, d) { const a = Math.max(s, START), b = Math.min(s + d, END); return { vis: b > a, top: (a - START) * PX, h: Math.max(0, (b - a) * PX) }; }
     function renderHead() {
@@ -1643,15 +1645,6 @@
       const bs = activeBlocks().slice().sort((a, b) => ((a.c === 'vaz') - (b.c === 'vaz')) || (b.d - a.d));
       bs.forEach(b => { const el = makeBlock(b); if (el) wgrid.appendChild(el); });
     }
-    function syncFrozen() {
-      const x = scrollx.scrollLeft;
-      const maxY = Math.max(0, (inner.offsetHeight || 0) - HEADER_H);
-      const y = Math.min(maxY, Math.max(0, window.scrollY - calvpTop));
-      dayhead.style.transform = 'translateY(' + y + 'px)';
-      gutter.style.transform = 'translateX(' + x + 'px)';
-      corner.style.transform = 'translate(' + x + 'px,' + y + 'px)';
-    }
-    (function loopFrozen() { syncFrozen(); requestAnimationFrame(loopFrozen); })();
     function layoutDay(blocks) {
       blocks.forEach(b => { b._col = 0; b._cols = 1; b._split = false; });
       const evs = blocks.slice().sort((a, b) => a.s - b.s || (b.d - a.d));
@@ -1764,7 +1757,7 @@
       pf.innerHTML = '<div class="lbl"><span class="dot" style="background:#5a574f"></span>Livre</div><div class="val">' + hrs(free) + '</div>';
       box.appendChild(pf);
     }
-    function renderCal() { computeEnd(activeBlocks()); computeCol(); renderHead(); renderGutter(); renderGrid(); renderSummary(); updateCalvpTop(); syncFrozen(); }
+    function renderCal() { computeEnd(activeBlocks()); computeCol(); renderHead(); renderGutter(); renderGrid(); renderSummary(); }
     wgrid.addEventListener('click', e => {
       if (e.target.closest('.block')) return;
       const rect = wgrid.getBoundingClientRect();
@@ -2447,7 +2440,6 @@
     $('#avatarClose').onclick = hideAvatarNudge;
 
     let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(renderCal, 120); });
-    window.addEventListener('load', updateCalvpTop);
 
     (async function () {
       const cc = $('#catCards');
