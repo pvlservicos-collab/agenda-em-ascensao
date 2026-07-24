@@ -1609,6 +1609,8 @@
 
     /* ---------- calendar render ---------- */
     let col = 120;
+    let calvpTop = 0;
+    function updateCalvpTop() { calvpTop = scrollx.getBoundingClientRect().top + window.scrollY; }
     function computeCol() {
       const W = scrollx.clientWidth || 360, avail = W - GUT, seven = avail / 7;
       col = seven >= 100 ? seven : avail / 3.5;   // cabe 7 (largo) ou mostra 3,5 dias (celular vertical)
@@ -1643,9 +1645,8 @@
     }
     function syncFrozen() {
       const x = scrollx.scrollLeft;
-      const calBox = scrollx.getBoundingClientRect();
       const maxY = Math.max(0, (inner.offsetHeight || 0) - HEADER_H);
-      const y = Math.min(maxY, Math.max(0, -calBox.top));
+      const y = Math.min(maxY, Math.max(0, window.scrollY - calvpTop));
       dayhead.style.transform = 'translateY(' + y + 'px)';
       gutter.style.transform = 'translateX(' + x + 'px)';
       corner.style.transform = 'translate(' + x + 'px,' + y + 'px)';
@@ -1763,7 +1764,7 @@
       pf.innerHTML = '<div class="lbl"><span class="dot" style="background:#5a574f"></span>Livre</div><div class="val">' + hrs(free) + '</div>';
       box.appendChild(pf);
     }
-    function renderCal() { computeEnd(activeBlocks()); computeCol(); renderHead(); renderGutter(); renderGrid(); renderSummary(); syncFrozen(); }
+    function renderCal() { computeEnd(activeBlocks()); computeCol(); renderHead(); renderGutter(); renderGrid(); renderSummary(); updateCalvpTop(); syncFrozen(); }
     wgrid.addEventListener('click', e => {
       if (e.target.closest('.block')) return;
       const rect = wgrid.getBoundingClientRect();
@@ -2446,6 +2447,7 @@
     $('#avatarClose').onclick = hideAvatarNudge;
 
     let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(renderCal, 120); });
+    window.addEventListener('load', updateCalvpTop);
 
     (async function () {
       const cc = $('#catCards');
